@@ -16,7 +16,7 @@ Include this script in your svg file at the end as follows:
 	<script type="text/ecmascript" xmlns:xlink="http://www.w3.org/1999/xlink" 
 	        xlink:href="slide-animation.js"></script>
 
-!!Instructions
+## Instructions
 
 1. draw your presentation in inkspace using separate layers for different slides, all slides in one drawing
 2. slide layers should be named starting 'slide...', eg. 'slide 1', 'slide 2'.
