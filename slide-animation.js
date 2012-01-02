@@ -12,9 +12,9 @@ var inkscapeNS = "http://www.inkscape.org/namespaces/inkscape";
 
 function initSlides(){
 	slideshow[0] = ["slide 1"];
-	slideshow[1] = ["slide 2"];
-	slideshow[2] = ["slide 3","slide 2"];
-	slideshow[3] = ["slide 4"];
+	slideshow[1] = ["slide 1","slide 2"];
+	slideshow[2] = ["slide 1","slide 2","slide 3"];
+	slideshow[3] = ["slide 1","slide 2","slide 3","slide 4"];
 }
 
 function showSlide(idx){
@@ -37,9 +37,21 @@ function nextSlide(){
 	slideIdx = ((slideIdx + 1 ) % slideCount) ;
 	showSlide(slideIdx);
 }
-function keypressed(evt){
-	console.log("keypressed: " + evt);
-	nextSlide();
+function previousSlide(){
+	console.log("previousSlide");
+	slideIdx = (slideIdx - 1 ) ;
+	// fix for javascript modulo behaviour
+	slideIdx = ((slideIdx % slideCount)+slideCount) % slideCount
+	showSlide(slideIdx);
+}
+function keypressed(e){
+	console.log("keypressed: " + e);
+	var keyCode = e.keyCode ? e.keyCode : e.charCode;
+	if(keyCode === 37 || keyCode === 33  ){
+		previousSlide();
+	} else if (keyCode === 39 || keyCode === 34 ){
+		nextSlide();
+	}
 }
 function mouseclicked(evt){
 	console.log("mouseclicked: " + evt);
@@ -50,8 +62,8 @@ function init(evt){
 	console.log("init: " + evt);
 	initSlides();
 	slideCount = slideshow.length;
-	document.getElementsByTagName("svg")[0].setAttribute("onkeypress","keypressed(evt)");
-	document.getElementsByTagName("svg")[0].setAttribute("onclick","mouseclicked(evt)");
+	document.addEventListener('keypress',function(evt){keypressed(evt);});
+	document.addEventListener('click',function(evt){mouseclicked(evt);});
 	showSlide(slideIdx)
 }
 
