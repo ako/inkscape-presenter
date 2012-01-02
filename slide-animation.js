@@ -15,6 +15,10 @@ function initSlides(){
 	slideshow[1] = ["slide 1","slide 2"];
 	slideshow[2] = ["slide 1","slide 2","slide 3"];
 	slideshow[3] = ["slide 1","slide 2","slide 3","slide 4"];
+	slideshow[4] = ["slide 1"];
+	slideshow[5] = ["slide 2"];
+	slideshow[6] = ["slide 3"];
+	slideshow[7] = ["slide 4"];
 }
 
 function showSlide(idx){
@@ -47,6 +51,11 @@ function previousSlide(){
 function keypressed(e){
 	console.log("keypressed: " + e);
 	var keyCode = e.keyCode ? e.keyCode : e.charCode;
+        // 37 - cursor left
+	// 33 - logitech remote presentor back button
+        // 39 - cursor right
+	// 34 - logitech remote presentor forward button
+        // These keycodes do not work in chromium
 	if(keyCode === 37 || keyCode === 33  ){
 		previousSlide();
 	} else if (keyCode === 39 || keyCode === 34 ){
@@ -68,6 +77,4 @@ function init(evt){
 }
 
 document.getElementsByTagName("svg")[0].setAttribute("onload","init(evt)");
-
-
 
