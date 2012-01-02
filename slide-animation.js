@@ -49,6 +49,7 @@ function mouseclicked(evt){
 function init(evt){
 	console.log("init: " + evt);
 	initSlides();
+	slideCount = slideshow.length;
 	document.getElementsByTagName("svg")[0].setAttribute("onkeypress","keypressed(evt)");
 	document.getElementsByTagName("svg")[0].setAttribute("onclick","mouseclicked(evt)");
 	showSlide(slideIdx)
