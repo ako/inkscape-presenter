@@ -7,9 +7,5 @@ Show inkscape layers as separate slides.
 3. save your drawing as an svg image (normal inkscape fileformat)
 4. edit the slide-animation.js file to define which layers to display for every slide.
 5. add a script element at the end of your svg file to load the slide-animation.js file
-
-	<script type="text/ecmascript" xmlns:xlink="http://www.w3.org/1999/xlink" 
-	        xlink:href="slide-animation.js"></script>
-
 6. open in a browser (tested using chromium and firefox)
 7. press mousebutton to see next slide
