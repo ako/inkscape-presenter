@@ -1,6 +1,22 @@
 # Inkscape presenter
 
-Show inkscape layers as separate slides.
+Small proof of concept script to test if it is possible to directly use 
+inkscape svg drawings for presentations. This script can be used to specify
+the which layers should be displayed for each slide of a presentation. You
+can reuse layers on multiple slides, displayed multiple layers on one slide.
+Script expects slide layers to be named starting with slide. This allows you
+to use non-slide layers.
+
+You can navigate your presentation by pressing the mouse button (chromium,
+firefox), or pressing cursor left, right (firefox) or by using a remote
+control (firefox).
+
+Include this script in your svg file at the end as follows:
+
+	<script type="text/ecmascript" xmlns:xlink="http://www.w3.org/1999/xlink" 
+	        xlink:href="slide-animation.js"></script>
+
+!!Instructions
 
 1. draw your presentation in inkspace using separate layers for different slides, all slides in one drawing
 2. slide layers should be named starting 'slide...', eg. 'slide 1', 'slide 2'.
