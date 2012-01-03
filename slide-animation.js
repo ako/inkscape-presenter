@@ -58,7 +58,7 @@ function nextSlide(){
 function previousSlide(){
 	console.log("previousSlide");
 	slideIdx = (slideIdx - 1 ) ;
-	// fix for javascript modulo behaviour
+	// workaround for javascript modulo behaviour
 	slideIdx = ((slideIdx % slideCount)+slideCount) % slideCount
 	showSlide(slideIdx);
 }
@@ -69,7 +69,6 @@ function keypressed(e){
 	// 33 - logitech remote presentor back button
         // 39 - cursor right
 	// 34 - logitech remote presentor forward button
-        // These keycodes do not work in chromium
 	if(keyCode === 37 || keyCode === 33  ){
 		previousSlide();
 	} else if (keyCode === 39 || keyCode === 34 ){
@@ -78,15 +77,30 @@ function keypressed(e){
 }
 function mouseclicked(evt){
 	console.log("mouseclicked: " + evt);
-	nextSlide();
+	var svgElem = document.getElementsByTagName("svg")[0];
+	if ( evt.clientX < (svgElem.width.baseVal.value/2)){
+		previousSlide();
+	} else {
+		nextSlide();
+	}
 }
-
+/* TODO: windowResized should resize the presentation to maximum
+ */
+function windowResized(evt){
+	console.log("windowResized: " + evt);
+	var svgElem = document.getElementsByTagName("svg")[0];
+	svgElem.setAttribute("width",window.innerWidth);
+	svgElem.setAttribute("height",window.innerHeight);
+	svgElem.setAttribute("viewBox","0 0 " + window.innerWidth + " " + window.innerHeight);
+}
 function init(evt){
 	console.log("init: " + evt);
 	initSlides();
 	slideCount = slideshow.length;
-	document.addEventListener('keypress',function(evt){keypressed(evt);});
+	document.addEventListener('keydown',function(evt){keypressed(evt);});
 	document.addEventListener('click',function(evt){mouseclicked(evt);});
+	window.addEventListener('resize',function(evt){windowResized(evt);});
+	windowResized(null);
 	showSlide(slideIdx)
 }
 
