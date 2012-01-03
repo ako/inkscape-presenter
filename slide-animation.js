@@ -28,11 +28,13 @@ function initSlides(){
 	slideshow[0] = ["slide 1"];
 	slideshow[1] = ["slide 1","slide 2"];
 	slideshow[2] = ["slide 1","slide 2","slide 3"];
-	slideshow[3] = ["slide 1","slide 2","slide 3","slide 4"];
-	slideshow[4] = ["slide 1"];
-	slideshow[5] = ["slide 2"];
-	slideshow[6] = ["slide 3"];
-	slideshow[7] = ["slide 4"];
+	slideshow[3] = ["slide 4"];
+	slideshow[4] = ["slide 4","slide 5"];
+	slideshow[5] = ["slide 4","slide 5","slide 6"];
+	slideshow[6] = ["slide 4","slide 5","slide 6","slide 7"];
+	slideshow[7] = ["slide 8"];
+	slideshow[8] = ["slide 8","slide 9"];
+	slideshow[9] = ["slide 8","slide 9","slide 10"];
 }
 
 function showSlide(idx){
