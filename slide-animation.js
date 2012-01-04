@@ -86,8 +86,18 @@ function mouseclicked(evt){
 		nextSlide();
 	}
 }
-/* TODO: windowResized should resize the presentation to maximum
- */
+function touchstart(evt){
+	console.log("touchstart: " + evt);
+	if(evt.touches.length == 1){
+		var svgElem = document.getElementsByTagName("svg")[0];
+		if ( evt.touches[0].pageX < (svgElem.width.baseVal.value/2)){
+			previousSlide();
+		} else {
+			nextSlide();
+		}
+	}
+}
+// TODO: windowResized should resize the presentation to maximum
 function windowResized(evt){
 	console.log("windowResized: " + evt);
 	var svgElem = document.getElementsByTagName("svg")[0];
@@ -101,6 +111,7 @@ function init(evt){
 	slideCount = slideshow.length;
 	document.addEventListener('keydown',function(evt){keypressed(evt);});
 	document.addEventListener('click',function(evt){mouseclicked(evt);});
+	document.addEventListener('touchstart',function(evt){touchstart(evt);});
 	window.addEventListener('resize',function(evt){windowResized(evt);});
 	windowResized(null);
 	showSlide(slideIdx)
