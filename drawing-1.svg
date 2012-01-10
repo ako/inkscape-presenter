@@ -819,7 +819,7 @@
      id="script25"
      type="text/ecmascript" />
   <script
-     xlink:href="inkscape-presenter.js"
+     xlink:href="svg-presenter.js"
      id="script26"
      type="text/ecmascript" />
 </svg>

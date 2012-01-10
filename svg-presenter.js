@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Inkscape presenter - Andrej Koelewijn
+ * Svg presenter - Andrej Koelewijn
  * 
  * Small proof of concept script to test if it's possible to directly use 
  * inkscape svg drawings for presentations. This script can be used to specify
@@ -15,11 +15,13 @@
  * Include this script in your svg file at the end as follows:
  * 
  * <script type="text/ecmascript" xmlns:xlink="http://www.w3.org/1999/xlink" 
- *         xlink:href="slide-animation.js"></script>
+ *         xlink:href="presentation-definition.js"></script>
+ * <script type="text/ecmascript" xmlns:xlink="http://www.w3.org/1999/xlink" 
+ *         xlink:href="svg-presenter.js"></script>
  *
  ******************************************************************************/
 
-var inkscapePresenter = {
+var svgPresenter = {
 	slideIdx   : 0,
 	slideCount : 4,
 	slides	   : new Array(),
@@ -112,10 +114,10 @@ var inkscapePresenter = {
 		this.slides = _slides;
 		this.initGroupNames();
 		this.slideCount = _slides.length;
-		document.addEventListener('keydown',function(evt){inkscapePresenter.keypressed(evt);});
-		document.addEventListener('click',function(evt){inkscapePresenter.mouseclicked(evt);});
-		document.addEventListener('touchstart',function(evt){inkscapePresenter.touchstart(evt);});
-		window.addEventListener('resize',function(evt){inkscapePresenter.windowResized(evt);});
+		document.addEventListener('keydown',function(evt){svgPresenter.keypressed(evt);});
+		document.addEventListener('click',function(evt){svgPresenter.mouseclicked(evt);});
+		document.addEventListener('touchstart',function(evt){svgPresenter.touchstart(evt);});
+		window.addEventListener('resize',function(evt){svgPresenter.windowResized(evt);});
 		this.windowResized(null);
 		this.showSlide(this.slideIdx)
 	}
