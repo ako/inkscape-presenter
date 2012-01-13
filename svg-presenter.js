@@ -27,6 +27,10 @@ var svgPresenter = {
 	slides: new Array(),
 	groupNames: new Array(),
 	inkscapeNS: 'http://www.inkscape.org/namespaces/inkscape',
+	touchStartX: 0,
+	touchStartY: 0,
+	touchEndX: 0,
+	touchEndY: 0,
 
 	showSlide: function showSlide(idx) {
 		console.log('showing slide: ' + idx);
@@ -91,14 +95,38 @@ var svgPresenter = {
 	},
 	touchstart: function(evt) {
 		console.log('touchstart: ' + evt);
-		if (evt.touches.length == 1) {
-			var svgElem = document.getElementsByTagName('svg')[0];
-			if (evt.touches[0].pageX < (svgElem.width.baseVal.value / 2)) {
-				this.previousSlide();
+	},
+	ontouchstart: function(evt){
+		console.log('ontouchstart: ' + evt + ", " + evt.touches.length + ", " + evt.changedTouches.length);
+		if ( evt.touches.length == 1 ){
+			this.touchStartX = evt.touches[0].pageX;
+			this.touchStartY = evt.touches[0].pageY;
+		}
+	},
+	ontouchend: function(evt){
+		console.log('ontouchend: ' + evt + ", " + evt.touches.length + ", " + evt.changedTouches.length );
+		if ( evt.changedTouches.length == 1 ){
+			this.touchEndX = evt.changedTouches[0].pageX;
+			this.touchEndY = evt.changedTouches[0].pageY;
+		
+			if ( (this.touchEndX - this.touchStartX > 100) || (this.touchStartX - this.touchEndX > 100) ){
+				if ( this.touchEndX < this.touchStartX ){
+					this.previousSlide();			
+				} else {
+					this.nextSlide();
+				}
 			} else {
-				this.nextSlide();
+				var svgElem = document.getElementsByTagName('svg')[0];
+				if ( this.touchEndX < (svgElem.width.baseVal.value / 2)) {
+					this.previousSlide();
+				} else {
+					this.nextSlide();
+				}
 			}
 		}
+	},
+	ontouchmove: function(evt){
+		console.log('ontouchmove: ' + evt + ", " + evt.touches.length + ", " + evt.changedTouches.length);
 	},
 	// TODO: windowResized should resize the presentation to maximum
 	windowResized: function(evt) {
@@ -116,7 +144,9 @@ var svgPresenter = {
 		this.slideCount = _slides.length;
 		document.addEventListener('keydown', function(evt) {svgPresenter.keypressed(evt);});
 		document.addEventListener('click', function(evt) {svgPresenter.mouseclicked(evt);});
-		document.addEventListener('touchstart', function(evt) {svgPresenter.touchstart(evt);});
+		document.addEventListener('touchend', function(evt) {svgPresenter.ontouchend(evt);});
+		document.addEventListener('touchmove', function(evt) {svgPresenter.ontouchmove(evt);});
+		document.addEventListener('touchstart', function(evt) {svgPresenter.ontouchstart(evt);});
 		window.addEventListener('resize', function(evt) {svgPresenter.windowResized(evt);});
 		this.windowResized(null);
 		this.showSlide(this.slideIdx);
