@@ -21,27 +21,31 @@
  *
  ******************************************************************************/
 
-(function(){
-	var svgPresenter = window.svgPresenter = function(){};
+(function() {
+	var svgPresenter = window.svgPresenter = function() {};
 	var svgp = svgPresenter;
-	var slideIdx = 0;
-    var slideCount = 4;
-	var slides = new Array();
-	var groupNames = new Array();
-	var inkscapeNS = 'http://www.inkscape.org/namespaces/inkscape';
-	var touchStartX = 0;
-	var touchStartY = 0;
-	var touchEndX = 0;
-	var touchEndY = 0;
+
+	svgp.globals = {
+		slideIdx: 0,
+		slideCount: 4,
+		slides: [],
+		groupNames: [],
+		inkscapeNS: 'http://www.inkscape.org/namespaces/inkscape',
+		touchStartX: 0,
+		touchStartY: 0,
+		touchEndX: 0,
+		touchEndY: 0
+	};
 
 	svgp.showSlide = function showSlide(idx) {
+		var i, groupname;
 		console.log('showing slide: ' + idx);
 		var groups = document.getElementsByTagName('g');
-		for (var i = 0; i < groups.length; i++) {
-			var groupName = groups[i].getAttributeNS(inkscapeNS, 'label');
+		for (i = 0; i < groups.length; i++) {
+			groupName = groups[i].getAttributeNS(svgp.globals.inkscapeNS, 'label');
 
-			if (groupNames.indexOf(groupName) !== -1) {
-				if (slides[idx].indexOf(groupName) !== -1) {
+			if (svgp.globals.groupNames.indexOf(groupName) !== -1) {
+				if (svgp.globals.slides[idx].indexOf(groupName) !== -1) {
 					groups[i].setAttribute('style', 'display:inline;');
 				} else {
 					groups[i].setAttribute('style', 'display:none;');
@@ -51,30 +55,31 @@
 	};
 
 	svgp.initGroupNames = function() {
+		var i, j;
 		console.log('init groupNames');
-		groupNames = new Array();
-		for (var i = 0; i < slides.length; i++) {
-			for (var j = 0; j < slides[i].length; j++) {
-				if (groupNames.indexOf(slides[i][j]) === -1) {
-					groupNames.push(slides[i][j]);
+		svgp.globals.groupNames = [];
+		for (i = 0; i < svgp.globals.slides.length; i++) {
+			for (j = 0; j < svgp.globals.slides[i].length; j++) {
+				if (svgp.globals.groupNames.indexOf(svgp.globals.slides[i][j]) === -1) {
+					svgp.globals.groupNames.push(svgp.globals.slides[i][j]);
 				}
 			}
 		}
-		console.log('All group names: ' + groupNames);
+		console.log('All group names: ' + svgp.globals.groupNames);
 	};
 
 	svgp.nextSlide = function() {
 		console.log('nextSlide');
-		slideIdx = ((slideIdx + 1) % slideCount);
-		svgp.showSlide(slideIdx);
+		svgp.globals.slideIdx = ((svgp.globals.slideIdx + 1) % svgp.globals.slideCount);
+		svgp.showSlide(svgp.globals.slideIdx);
 	};
 
 	svgp.previousSlide = function() {
 		console.log('previousSlide');
-		slideIdx = (slideIdx - 1);
+		svgp.globals.slideIdx = (svgp.globals.slideIdx - 1);
 		// workaround for javascript modulo behaviour
-		slideIdx = ((slideIdx % slideCount) + slideCount) % slideCount;
-		svgp.showSlide(slideIdx);
+		svgp.globals.slideIdx = ((svgp.globals.slideIdx % svgp.globals.slideCount) + svgp.globals.slideCount) % svgp.globals.slideCount;
+		svgp.showSlide(svgp.globals.slideIdx);
 	};
 
 	svgp.keypressed = function(e) {
@@ -105,29 +110,29 @@
 		console.log('touchstart: ' + evt);
 	};
 
-	svgp.ontouchstart = function(evt){
-		console.log('ontouchstart: ' + evt + ", " + evt.touches.length + ", " + evt.changedTouches.length);
-		if ( evt.touches.length == 1 ){
-			touchStartX = evt.touches[0].pageX;
-			touchStartY = evt.touches[0].pageY;
+	svgp.ontouchstart = function(evt) {
+		console.log('ontouchstart: ' + evt + ', ' + evt.touches.length + ', ' + evt.changedTouches.length);
+		if (evt.touches.length === 1) {
+			svgp.globals.touchStartX = evt.touches[0].pageX;
+			svgp.globals.touchStartY = evt.touches[0].pageY;
 		}
 	};
 
-	svgp.ontouchend = function(evt){
-		console.log('ontouchend: ' + evt + ", " + evt.touches.length + ", " + evt.changedTouches.length );
-		if ( evt.changedTouches.length == 1 ){
-			touchEndX = evt.changedTouches[0].pageX;
-			touchEndY = evt.changedTouches[0].pageY;
-		
-			if ( (touchEndX - touchStartX > 100) || (touchStartX - touchEndX > 100) ){
-				if ( touchEndX < touchStartX ){
-					svgp.previousSlide();			
+	svgp.ontouchend = function(evt) {
+		console.log('ontouchend: ' + evt + ', ' + evt.touches.length + ', ' + evt.changedTouches.length);
+		if (evt.changedTouches.length === 1) {
+			svgp.globals.touchEndX = evt.changedTouches[0].pageX;
+			svgp.globals.touchEndY = evt.changedTouches[0].pageY;
+
+			if ((svgp.globals.touchEndX - svgp.globals.touchStartX > 100) || (svgp.globals.touchStartX - svgp.globals.touchEndX > 100)) {
+				if (svgp.globals.touchEndX < svgp.touchStartX) {
+					svgp.previousSlide();
 				} else {
 					svgp.nextSlide();
 				}
 			} else {
 				var svgElem = document.getElementsByTagName('svg')[0];
-				if ( touchEndX < (svgElem.width.baseVal.value / 2)) {
+				if (svgp.globals.touchEndX < (svgElem.width.baseVal.value / 2)) {
 					svgp.previousSlide();
 				} else {
 					svgp.nextSlide();
@@ -136,8 +141,8 @@
 		}
 	};
 
-	svgp.ontouchmove = function(evt){
-		console.log('ontouchmove: ' + evt + ", " + evt.touches.length + ", " + evt.changedTouches.length);
+	svgp.ontouchmove = function(evt) {
+		console.log('ontouchmove: ' + evt + ', ' + evt.touches.length + ', ' + evt.changedTouches.length);
 	};
 
 	// TODO: windowResized should resize the presentation to maximum
@@ -152,9 +157,9 @@
 	svgp.init = function(_slides) {
 		console.log('init');
 		//initSlides();
-		slides = _slides;
+		svgp.globals.slides = _slides;
 		svgp.initGroupNames();
-		slideCount = slides.length;
+		svgp.globals.slideCount = svgp.globals.slides.length;
 		document.addEventListener('keydown', function(evt) {svgPresenter.keypressed(evt);});
 		document.addEventListener('click', function(evt) {svgPresenter.mouseclicked(evt);});
 		document.addEventListener('touchend', function(evt) {svgPresenter.ontouchend(evt);});
@@ -162,7 +167,7 @@
 		document.addEventListener('touchstart', function(evt) {svgPresenter.ontouchstart(evt);});
 		window.addEventListener('resize', function(evt) {svgPresenter.windowResized(evt);});
 		svgp.windowResized(null);
-		svgp.showSlide(slideIdx);
-	}
+		svgp.showSlide(svgp.globals.slideIdx);
+	};
 })();
 
