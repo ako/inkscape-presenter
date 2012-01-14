@@ -21,57 +21,63 @@
  *
  ******************************************************************************/
 
-var svgPresenter = {
-	slideIdx: 0,
-	slideCount: 4,
-	slides: new Array(),
-	groupNames: new Array(),
-	inkscapeNS: 'http://www.inkscape.org/namespaces/inkscape',
-	touchStartX: 0,
-	touchStartY: 0,
-	touchEndX: 0,
-	touchEndY: 0,
+(function(){
+	var svgPresenter = window.svgPresenter = function(){};
+	var svgp = svgPresenter;
+	var slideIdx = 0;
+    var slideCount = 4;
+	var slides = new Array();
+	var groupNames = new Array();
+	var inkscapeNS = 'http://www.inkscape.org/namespaces/inkscape';
+	var touchStartX = 0;
+	var touchStartY = 0;
+	var touchEndX = 0;
+	var touchEndY = 0;
 
-	showSlide: function showSlide(idx) {
+	svgp.showSlide = function showSlide(idx) {
 		console.log('showing slide: ' + idx);
 		var groups = document.getElementsByTagName('g');
 		for (var i = 0; i < groups.length; i++) {
-			var groupName = groups[i].getAttributeNS(this.inkscapeNS, 'label');
+			var groupName = groups[i].getAttributeNS(inkscapeNS, 'label');
 
-			if (this.groupNames.indexOf(groupName) !== -1) {
-				if (this.slides[idx].indexOf(groupName) !== -1) {
+			if (groupNames.indexOf(groupName) !== -1) {
+				if (slides[idx].indexOf(groupName) !== -1) {
 					groups[i].setAttribute('style', 'display:inline;');
 				} else {
 					groups[i].setAttribute('style', 'display:none;');
 				}
 			}
 		}
-	},
-	initGroupNames: function() {
+	};
+
+	svgp.initGroupNames = function() {
 		console.log('init groupNames');
-		this.groupNames = new Array();
-		for (var i = 0; i < this.slides.length; i++) {
-			for (var j = 0; j < this.slides[i].length; j++) {
-				if (this.groupNames.indexOf(this.slides[i][j]) === -1) {
-					this.groupNames.push(this.slides[i][j]);
+		groupNames = new Array();
+		for (var i = 0; i < slides.length; i++) {
+			for (var j = 0; j < slides[i].length; j++) {
+				if (groupNames.indexOf(slides[i][j]) === -1) {
+					groupNames.push(slides[i][j]);
 				}
 			}
 		}
-		console.log('All group names: ' + this.groupNames);
-	},
-	nextSlide: function() {
+		console.log('All group names: ' + groupNames);
+	};
+
+	svgp.nextSlide = function() {
 		console.log('nextSlide');
-		this.slideIdx = ((this.slideIdx + 1) % this.slideCount);
-		this.showSlide(this.slideIdx);
-	},
-	previousSlide: function() {
+		slideIdx = ((slideIdx + 1) % slideCount);
+		svgp.showSlide(slideIdx);
+	};
+
+	svgp.previousSlide = function() {
 		console.log('previousSlide');
-		this.slideIdx = (this.slideIdx - 1);
+		slideIdx = (slideIdx - 1);
 		// workaround for javascript modulo behaviour
-		this.slideIdx = ((this.slideIdx % this.slideCount) + this.slideCount) % this.slideCount;
-		this.showSlide(this.slideIdx);
-	},
-	keypressed: function(e) {
+		slideIdx = ((slideIdx % slideCount) + slideCount) % slideCount;
+		svgp.showSlide(slideIdx);
+	};
+
+	svgp.keypressed = function(e) {
 		console.log('keypressed: ' + e);
 		var keyCode = e.keyCode ? e.keyCode : e.charCode;
 		// 37 - cursor left
@@ -79,77 +85,84 @@ var svgPresenter = {
 		// 39 - cursor right
 		// 34 - logitech remote presentor forward button
 		if (keyCode === 37 || keyCode === 33) {
-			this.previousSlide();
+			svgp.previousSlide();
 		} else if (keyCode === 39 || keyCode === 34) {
-			this.nextSlide();
+			svgp.nextSlide();
 		}
-	},
-	mouseclicked: function(evt) {
+	};
+
+	svgp.mouseclicked = function(evt) {
 		console.log('mouseclicked: ' + evt);
 		var svgElem = document.getElementsByTagName('svg')[0];
 		if (evt.clientX < (svgElem.width.baseVal.value / 2)) {
-			this.previousSlide();
+			svgp.previousSlide();
 		} else {
-			this.nextSlide();
+			svgp.nextSlide();
 		}
-	},
-	touchstart: function(evt) {
+	};
+
+	svgp.touchstart = function(evt) {
 		console.log('touchstart: ' + evt);
-	},
-	ontouchstart: function(evt){
+	};
+
+	svgp.ontouchstart = function(evt){
 		console.log('ontouchstart: ' + evt + ", " + evt.touches.length + ", " + evt.changedTouches.length);
 		if ( evt.touches.length == 1 ){
-			this.touchStartX = evt.touches[0].pageX;
-			this.touchStartY = evt.touches[0].pageY;
+			touchStartX = evt.touches[0].pageX;
+			touchStartY = evt.touches[0].pageY;
 		}
-	},
-	ontouchend: function(evt){
+	};
+
+	svgp.ontouchend = function(evt){
 		console.log('ontouchend: ' + evt + ", " + evt.touches.length + ", " + evt.changedTouches.length );
 		if ( evt.changedTouches.length == 1 ){
-			this.touchEndX = evt.changedTouches[0].pageX;
-			this.touchEndY = evt.changedTouches[0].pageY;
+			touchEndX = evt.changedTouches[0].pageX;
+			touchEndY = evt.changedTouches[0].pageY;
 		
-			if ( (this.touchEndX - this.touchStartX > 100) || (this.touchStartX - this.touchEndX > 100) ){
-				if ( this.touchEndX < this.touchStartX ){
-					this.previousSlide();			
+			if ( (touchEndX - touchStartX > 100) || (touchStartX - touchEndX > 100) ){
+				if ( touchEndX < touchStartX ){
+					svgp.previousSlide();			
 				} else {
-					this.nextSlide();
+					svgp.nextSlide();
 				}
 			} else {
 				var svgElem = document.getElementsByTagName('svg')[0];
-				if ( this.touchEndX < (svgElem.width.baseVal.value / 2)) {
-					this.previousSlide();
+				if ( touchEndX < (svgElem.width.baseVal.value / 2)) {
+					svgp.previousSlide();
 				} else {
-					this.nextSlide();
+					svgp.nextSlide();
 				}
 			}
 		}
-	},
-	ontouchmove: function(evt){
+	};
+
+	svgp.ontouchmove = function(evt){
 		console.log('ontouchmove: ' + evt + ", " + evt.touches.length + ", " + evt.changedTouches.length);
-	},
+	};
+
 	// TODO: windowResized should resize the presentation to maximum
-	windowResized: function(evt) {
+	svgp.windowResized = function(evt) {
 		console.log('windowResized: ' + evt);
 		var svgElem = document.getElementsByTagName('svg')[0];
 		svgElem.setAttribute('width', window.innerWidth);
 		svgElem.setAttribute('height', window.innerHeight);
 		svgElem.setAttribute('viewBox', '0 0 ' + window.innerWidth + ' ' + window.innerHeight);
-	},
-	init: function(_slides) {
+	};
+
+	svgp.init = function(_slides) {
 		console.log('init');
 		//initSlides();
-		this.slides = _slides;
-		this.initGroupNames();
-		this.slideCount = _slides.length;
+		slides = _slides;
+		svgp.initGroupNames();
+		slideCount = slides.length;
 		document.addEventListener('keydown', function(evt) {svgPresenter.keypressed(evt);});
 		document.addEventListener('click', function(evt) {svgPresenter.mouseclicked(evt);});
 		document.addEventListener('touchend', function(evt) {svgPresenter.ontouchend(evt);});
 		document.addEventListener('touchmove', function(evt) {svgPresenter.ontouchmove(evt);});
 		document.addEventListener('touchstart', function(evt) {svgPresenter.ontouchstart(evt);});
 		window.addEventListener('resize', function(evt) {svgPresenter.windowResized(evt);});
-		this.windowResized(null);
-		this.showSlide(this.slideIdx);
+		svgp.windowResized(null);
+		svgp.showSlide(slideIdx);
 	}
-};
+})();
 
