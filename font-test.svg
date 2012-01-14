@@ -50,7 +50,46 @@
   font-weight: normal;
   src: local('Walter Turncoat'), local('WalterTurncoat'), url('http://themes.googleusercontent.com/static/fonts/walterturncoat/v3/sG9su5g4GXy1KP73cU3hvf-Xg5uhy57aq-Akr_1zBcg.woff') format('woff');
 }
+@font-face {
+  font-family: 'Fredericka the Great';
+  font-style: normal;
+  font-weight: normal;
+  src: local('Fredericka the Great'), local('FrederickatheGreat'), url('http://themes.googleusercontent.com/static/fonts/frederickathegreat/v2/7Es8Lxoku-e5eOZWpxw18vc3vBAn7YvtW9hNjxWZBR0.woff') format('woff');
+}
 </style>
+    <filter
+       id="filter3020"
+       inkscape:label="Drop shadow"
+       width="1.5"
+       height="1.5"
+       x="-.25"
+       y="-.25">
+      <feGaussianBlur
+         id="feGaussianBlur3022"
+         in="SourceAlpha"
+         stdDeviation="2"
+         result="blur" />
+      <feColorMatrix
+         id="feColorMatrix3024"
+         result="bluralpha"
+         type="matrix"
+         values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.5 0 " />
+      <feOffset
+         id="feOffset3026"
+         in="bluralpha"
+         dx="2"
+         dy="2"
+         result="offsetBlur" />
+      <feMerge
+         id="feMerge3028">
+        <feMergeNode
+           id="feMergeNode3030"
+           in="offsetBlur" />
+        <feMergeNode
+           id="feMergeNode3032"
+           in="SourceGraphic" />
+      </feMerge>
+    </filter>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -60,9 +99,9 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.095627"
-     inkscape:cx="104.59822"
+     inkscape:cx="185.17926"
      inkscape:cy="240"
-     inkscape:current-layer="layer5"
+     inkscape:current-layer="layer4"
      inkscape:document-units="px"
      showgrid="false"
      inkscape:window-width="1600"
@@ -93,21 +132,21 @@
      style="display:inline">
     <text
        xml:space="preserve"
-       style="font-size:88.60897827px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Architects Daughter;-inkscape-font-specification:Architects Daughter"
-       x="187.06203"
-       y="54.356598"
+       style="font-size:88.60897827px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#5c3566;fill-opacity:1;stroke:none;font-family:Architects Daughter;-inkscape-font-specification:Architects Daughter"
+       x="147.4519"
+       y="52.632023"
        id="text3003"
        sodipodi:linespacing="125%"
        transform="scale(0.94474578,1.0584858)"><tspan
          sodipodi:role="line"
          id="tspan3005"
-         x="187.06203"
-         y="54.356598"
-         style="font-size:48px;font-family:Shadows Into Light;-inkscape-font-specification:Shadows Into Light">This is 'Shadows</tspan><tspan
+         x="147.4519"
+         y="52.632023"
+         style="font-size:48px;fill:#5c3566;font-family:Shadows Into Light;-inkscape-font-specification:Shadows Into Light">This is 'Shadows</tspan><tspan
          sodipodi:role="line"
-         x="187.06203"
-         y="114.35659"
-         style="font-size:48px;font-family:Shadows Into Light;-inkscape-font-specification:Shadows Into Light"
+         x="147.4519"
+         y="112.63203"
+         style="font-size:48px;fill:#5c3566;font-family:Shadows Into Light;-inkscape-font-specification:Shadows Into Light"
          id="tspan3012">into Light'</tspan></text>
     <flowRoot
        xml:space="preserve"
@@ -119,7 +158,7 @@
            height="69.366676"
            x="120.47896"
            y="7.2113595" /></flowRegion><flowPara
-         id="flowPara3020"></flowPara></flowRoot>  </g>
+         id="flowPara3020" /></flowRoot>  </g>
   <g
      inkscape:groupmode="layer"
      id="layer4"
@@ -127,21 +166,21 @@
      style="display:inline">
     <text
        xml:space="preserve"
-       style="font-size:102.25850677px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Architects Daughter;-inkscape-font-specification:Architects Daughter"
-       x="389.41873"
-       y="191.61969"
+       style="font-size:102.25850677px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#cc0000;fill-opacity:1;stroke:none;font-family:Architects Daughter;-inkscape-font-specification:Architects Daughter"
+       x="411.52673"
+       y="121.98471"
        id="text3015"
        sodipodi:linespacing="125%"
-       transform="scale(0.99083057,1.0092543)"><tspan
+       transform="scale(0.99083056,1.0092543)"><tspan
          sodipodi:role="line"
          id="tspan3017"
-         x="389.41873"
-         y="191.61969"
-         style="font-size:48px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Annie Use Your Telescope;-inkscape-font-specification:Annie Use Your Telescope">This font is called</tspan><tspan
+         x="411.52673"
+         y="121.98471"
+         style="font-size:48px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#cc0000;font-family:Annie Use Your Telescope;-inkscape-font-specification:Annie Use Your Telescope">This font is called</tspan><tspan
          sodipodi:role="line"
-         x="389.41873"
-         y="251.61971"
-         style="font-size:48px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Annie Use Your Telescope;-inkscape-font-specification:Annie Use Your Telescope"
+         x="411.52673"
+         y="181.9847"
+         style="font-size:48px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#cc0000;font-family:Annie Use Your Telescope;-inkscape-font-specification:Annie Use Your Telescope"
          id="tspan3010">'Annie Use Your Telescope'</tspan></text>
   </g>
   <g
@@ -151,23 +190,43 @@
      style="display:inline">
     <text
        xml:space="preserve"
-       style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Walter Turncoat;-inkscape-font-specification:Walter Turncoat"
-       x="352.30969"
-       y="339.44122"
+       style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#4e9a06;fill-opacity:1;stroke:none;font-family:Walter Turncoat;-inkscape-font-specification:Walter Turncoat;filter:url(#filter3020)"
+       x="329.49173"
+       y="232.65306"
        id="text3002"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3004"
-         x="358.71594"
-         y="339.44122">And another font, </tspan><tspan
+         x="335.89798"
+         y="232.65306">And another font, </tspan><tspan
          sodipodi:role="line"
-         x="358.71594"
-         y="389.44122"
+         x="335.89798"
+         y="282.65308"
          id="tspan3006">this one is called </tspan><tspan
          sodipodi:role="line"
-         x="352.30969"
-         y="439.44122"
+         x="329.49173"
+         y="332.65308"
          id="tspan3008">'walter turncoat'</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer6"
+     inkscape:label="font 4">
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#3465a4;fill-opacity:1;stroke:none;font-family:Fredericka the Great;-inkscape-font-specification:Fredericka the Great"
+       x="269.25223"
+       y="394.20438"
+       id="text3009"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3011"
+         x="269.25223"
+         y="394.20438">'Fredericka the Great'</tspan><tspan
+         sodipodi:role="line"
+         x="269.25223"
+         y="444.20438"
+         id="tspan3013">not locally installed</tspan></text>
   </g>
   <g
      inkscape:groupmode="layer"
@@ -176,12 +235,12 @@
      style="display:inline">
     <path
        style="opacity:0.59259261;fill:#a40000;fill-opacity:1;stroke:none"
-       d="m 569.2535,421.08471 c 20.93796,1.57635 41.94223,2.25075 62.93822,2.08317 4.30865,-7.27863 -25.64243,-15.56958 -9.4244,-10.84018 15.56782,1.0257 18.76391,20.4647 7.32714,29.33645 -11.78945,8.4221 -0.43782,-4.99859 3.39856,-8.50284 6.96877,-15.27387 -12.20761,-17.45726 -21.41579,-22.73658 2.55278,-8.07153 23.10041,4.55586 23.52066,12.17001 -10.31792,8.15622 -25.59409,-0.16373 -37.90946,2.33369 -7.41549,-1.49941 -28.01568,1.8386 -28.43493,-3.84372 z"
+       d="m 550.99911,234.97343 c 20.93796,1.57635 41.94223,2.25075 62.93822,2.08317 4.30865,-7.27863 -25.64243,-15.56958 -9.4244,-10.84018 15.56782,1.0257 18.76391,20.4647 7.32714,29.33645 -11.78945,8.4221 -0.43782,-4.99859 3.39856,-8.50284 6.96877,-15.27387 -12.20761,-17.45726 -21.41579,-22.73658 2.55278,-8.07153 23.10041,4.55586 23.52066,12.17001 -10.31792,8.15622 -25.59409,-0.16373 -37.90946,2.33369 -7.41549,-1.49941 -28.01568,1.8386 -28.43493,-3.84372 z"
        id="path2999"
        inkscape:connector-curvature="0" />
     <path
        style="opacity:0.59259261;fill:#a40000;fill-opacity:1;stroke:none"
-       d="m 80.604064,419.30446 c -13.445622,-0.3747 -26.903708,-0.0505 -40.344789,-0.62613 -4.679388,-2.49689 -17.226571,-1.76978 -16.187061,-7.74422 7.522597,-3.9091 16.517468,-5.13774 24.771648,-5.75552 -4.758468,3.38292 -18.25878,7.50611 -26.814548,8.45316 -4.50924,-0.84571 7.534652,1.15328 8.760179,3.1659 7.135899,5.56695 17.194215,6.81562 24.070611,10.8095 -9.48425,2.29807 -18.391653,-5.96885 -26.996763,-9.45062 -3.523639,-0.80898 -14.805514,-3.49762 -7.903199,-7.58141 10.312828,1.91546 20.337723,-6.41369 29.806004,-6.20891 -0.224078,6.96585 -13.129562,2.20973 -17.920281,6.25632 -3.184123,3.07627 -13.27376,1.26108 -4.317463,1.74629 8.044868,3.44778 16.651557,4.95811 25.424953,4.48207 9.42734,0.47153 19.045454,-1.06072 28.337888,0.3948 1.087913,0.55755 -0.125986,1.72713 -0.687179,2.05877 z"
+       d="m 80.604064,243.12092 c -13.445622,-0.3747 -26.903708,-0.0505 -40.344789,-0.62613 -4.679388,-2.49689 -17.226571,-1.76978 -16.187061,-7.74422 7.522597,-3.9091 16.517468,-5.13774 24.771648,-5.75552 -4.758468,3.38292 -18.25878,7.50611 -26.814548,8.45316 -4.50924,-0.84571 7.534652,1.15328 8.760179,3.1659 7.135899,5.56695 17.194215,6.81562 24.070611,10.8095 -9.48425,2.29807 -18.391653,-5.96885 -26.996763,-9.45062 -3.523639,-0.80898 -14.805514,-3.49762 -7.903199,-7.58141 10.312828,1.91546 20.337723,-6.41369 29.806004,-6.20891 -0.224078,6.96585 -13.129562,2.20973 -17.920281,6.25632 -3.184123,3.07627 -13.27376,1.26108 -4.317463,1.74629 8.044868,3.44778 16.651557,4.95811 25.424953,4.48207 9.42734,0.47153 19.045454,-1.06072 28.337888,0.3948 1.087913,0.55755 -0.125986,1.72713 -0.687179,2.05877 z"
        id="path3001"
        inkscape:connector-curvature="0" />
   </g>
