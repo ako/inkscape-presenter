@@ -24,3 +24,7 @@ Include this script in your svg file at the end as follows:
 4. add a script elements at the end of your svg file to load your presentation structure and the svg-presenter.js file
 5. open in a browser (tested using chromium and firefox and safari on iPad)
 6. press mousebutton to see next slide (or arrow keys, or page-up/page-down, or you can use touch on an iPad)
+
+## Resources
+
+1. A todo list is available on Trello https://trello.com/board/inkscape-presenter/4f11dfe8e8a775991e2dd427

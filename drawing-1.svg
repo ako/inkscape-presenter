@@ -17,7 +17,29 @@
    inkscape:version="0.48.2 r9819"
    sodipodi:docname="drawing-1.svg">
   <defs
-     id="defs2987" />
+     id="defs2987">
+    <font
+       horiz-adv-x="1024"
+       id="font3007"
+       inkscape:label="font 1">
+      <font-face
+         units-per-em="1024"
+         id="font-face3009"
+         font-family="SVGFont 1" />
+      <missing-glyph
+         d="M0,0h1000v1024h-1000z"
+         id="missing-glyph3011" />
+    </font>
+    <style
+       type="text/css"
+       id="style7">@font-face {
+  font-family: 'Architects Daughter';
+  font-style: normal;
+  font-weight: normal;
+  src: local('Architects Daughter'), local('ArchitectsDaughter'), url('http://themes.googleusercontent.com/static/fonts/architectsdaughter/v3/RXTgOOQ9AAtaVOHxx0IUBOkI_DLF4EgbZt3mhU8gQFo.woff') format('woff');
+}
+</style>
+  </defs>
   <sodipodi:namedview
      inkscape:document-units="px"
      pagecolor="#ffffff"

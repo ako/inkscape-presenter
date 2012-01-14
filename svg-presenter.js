@@ -1,34 +1,35 @@
-/*******************************************************************************
- * Svg presenter - Andrej Koelewijn
- *
- * Small proof of concept script to test if it's possible to directly use
- * inkscape svg drawings for presentations. This script can be used to specify
- * the which layers should be displayed for each slide of a presentation. You
- * can reuse layers on multiple slides, displayed multiple layers on one slide.
- * Script expects slide layers to be named starting with slide. This allows you
- * to use non-slide layers.
- *
- * You can navigate your presentation by pressing the mouse button (chromium,
- * firefox), or pressing cursor left, right (firefox) or by using a remote
- * control (firefox).
- *
- * Include this script in your svg file at the end as follows:
- *
- * <script type="text/ecmascript" xmlns:xlink="http://www.w3.org/1999/xlink"
- *         xlink:href="presentation-definition.js"></script>
- * <script type="text/ecmascript" xmlns:xlink="http://www.w3.org/1999/xlink"
- *         xlink:href="svg-presenter.js"></script>
- *
- ******************************************************************************/
+// Svg presenter - Andrej Koelewijn
+//
+// Small proof of concept script to test if it's possible to directly use
+// inkscape svg drawings for presentations. This script can be used to specify
+// the which layers should be displayed for each slide of a presentation. You
+// can reuse layers on multiple slides, displayed multiple layers on one slide.
+// Script expects slide layers to be named starting with slide. This allows you
+// to use non-slide layers.
+//
+// You can navigate your presentation by pressing the mouse button (chromium,
+// firefox), or pressing cursor left, right (firefox) or by using a remote
+// control (firefox).
+//
+// Include this script in your svg file at the end as follows:
+//
+// script type="text/ecmascript" xmlns:xlink="http://www.w3.org/1999/xlink"
+//         xlink:href="presentation-definition.js"
+// script type="text/ecmascript" xmlns:xlink="http://www.w3.org/1999/xlink"
+//         xlink:href="svg-presenter.js"
 
 (function() {
 	var svgPresenter = window.svgPresenter = function() {};
 	var svgp = svgPresenter;
 
 	svgp.globals = {
+		// current slide
 		slideIdx: 0,
+		// number of slides
 		slideCount: 4,
-		slides: [],
+		// array of layers to display per slide
+		slides: [], 
+		// names of all the layers (groups) used in the slides
 		groupNames: [],
 		inkscapeNS: 'http://www.inkscape.org/namespaces/inkscape',
 		touchStartX: 0,
@@ -146,6 +147,7 @@
 	};
 
 	// TODO: windowResized should resize the presentation to maximum
+/*
 	svgp.windowResized = function(evt) {
 		console.log('windowResized: ' + evt);
 		var svgElem = document.getElementsByTagName('svg')[0];
@@ -153,10 +155,9 @@
 		svgElem.setAttribute('height', window.innerHeight);
 		svgElem.setAttribute('viewBox', '0 0 ' + window.innerWidth + ' ' + window.innerHeight);
 	};
-
+*/
 	svgp.init = function(_slides) {
 		console.log('init');
-		//initSlides();
 		svgp.globals.slides = _slides;
 		svgp.initGroupNames();
 		svgp.globals.slideCount = svgp.globals.slides.length;
@@ -166,7 +167,7 @@
 		document.addEventListener('touchmove', function(evt) {svgPresenter.ontouchmove(evt);});
 		document.addEventListener('touchstart', function(evt) {svgPresenter.ontouchstart(evt);});
 		window.addEventListener('resize', function(evt) {svgPresenter.windowResized(evt);});
-		svgp.windowResized(null);
+		//svgp.windowResized(null);
 		svgp.showSlide(svgp.globals.slideIdx);
 	};
 })();
