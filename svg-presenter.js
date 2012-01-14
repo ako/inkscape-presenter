@@ -32,6 +32,7 @@
 		// names of all the layers (groups) used in the slides
 		groupNames: [],
 		inkscapeNS: 'http://www.inkscape.org/namespaces/inkscape',
+		sodipodiNS: 'http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd',
 		touchStartX: 0,
 		touchStartY: 0,
 		touchEndX: 0,
@@ -147,15 +148,22 @@
 	};
 
 	// TODO: windowResized should resize the presentation to maximum
-/*
 	svgp.windowResized = function(evt) {
 		console.log('windowResized: ' + evt);
 		var svgElem = document.getElementsByTagName('svg')[0];
-		svgElem.setAttribute('width', window.innerWidth);
-		svgElem.setAttribute('height', window.innerHeight);
-		svgElem.setAttribute('viewBox', '0 0 ' + window.innerWidth + ' ' + window.innerHeight);
+		var originalWidth = svgElem.width.animVal.value;
+		var originalHeight = svgElem.height.animVal.value;
+		var currentWidth = svgElem.clientWidth;
+		var currentHeight = svgElem.clientHeight;
+		var scaleRatioX = currentWidth / originalWidth;
+		var scaleRatioY = currentHeight / originalHeight;
+		var scaleRatio = Math.min(scaleRatioX,scaleRatioY);
+		var groups = document.getElementsByTagName('g');
+		for (i = 0; i < groups.length; i++) {
+			groups[i].setAttribute('transform','scale(' + scaleRatio + ' ' + scaleRatio + ')');
+		}
 	};
-*/
+
 	svgp.init = function(_slides) {
 		console.log('init');
 		svgp.globals.slides = _slides;
@@ -166,8 +174,8 @@
 		document.addEventListener('touchend', function(evt) {svgPresenter.ontouchend(evt);});
 		document.addEventListener('touchmove', function(evt) {svgPresenter.ontouchmove(evt);});
 		document.addEventListener('touchstart', function(evt) {svgPresenter.ontouchstart(evt);});
-		window.addEventListener('resize', function(evt) {svgPresenter.windowResized(evt);});
-		//svgp.windowResized(null);
+		//window.addEventListener('resize', function(evt) {svgPresenter.windowResized(evt);});
+		svgp.windowResized(null);
 		svgp.showSlide(svgp.globals.slideIdx);
 	};
 })();
