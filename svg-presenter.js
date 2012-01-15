@@ -28,7 +28,7 @@
 		// number of slides
 		slideCount: 4,
 		// array of layers to display per slide
-		slides: [], 
+		slides: [],
 		// names of all the layers (groups) used in the slides
 		groupNames: [],
 		inkscapeNS: 'http://www.inkscape.org/namespaces/inkscape',
@@ -108,10 +108,6 @@
 		}
 	};
 
-	svgp.touchstart = function(evt) {
-		console.log('touchstart: ' + evt);
-	};
-
 	svgp.ontouchstart = function(evt) {
 		console.log('ontouchstart: ' + evt + ', ' + evt.touches.length + ', ' + evt.changedTouches.length);
 		if (evt.touches.length === 1) {
@@ -122,17 +118,27 @@
 
 	svgp.ontouchend = function(evt) {
 		console.log('ontouchend: ' + evt + ', ' + evt.touches.length + ', ' + evt.changedTouches.length);
+		var distX;
+
 		if (evt.changedTouches.length === 1) {
 			svgp.globals.touchEndX = evt.changedTouches[0].pageX;
 			svgp.globals.touchEndY = evt.changedTouches[0].pageY;
 
-			if ((svgp.globals.touchEndX - svgp.globals.touchStartX > 100) || (svgp.globals.touchStartX - svgp.globals.touchEndX > 100)) {
+			distX = Math.abs(svgp.globals.touchEndX - svgp.globals.touchStartX);
+			console.log('distX: ' + distX);
+
+			if (distX > 100) {
+				// finger moved for more than 100px
 				if (svgp.globals.touchEndX < svgp.touchStartX) {
-					svgp.previousSlide();
-				} else {
+					// swipe from right to left
 					svgp.nextSlide();
+				} else {
+					// swipe from left to right
+					svgp.previousSlide();
 				}
 			} else {
+				// finger moved for less than 100px,
+				// test if left or right side of image was touchd
 				var svgElem = document.getElementsByTagName('svg')[0];
 				if (svgp.globals.touchEndX < (svgElem.width.baseVal.value / 2)) {
 					svgp.previousSlide();
@@ -143,39 +149,43 @@
 		}
 	};
 
-	svgp.ontouchmove = function(evt) {
-		console.log('ontouchmove: ' + evt + ', ' + evt.touches.length + ', ' + evt.changedTouches.length);
-	};
-
-	// TODO: windowResized should resize the presentation to maximum
+	// Resize drawing to fit viewport
+/*
 	svgp.windowResized = function(evt) {
-		console.log('windowResized: ' + evt);
 		var svgElem = document.getElementsByTagName('svg')[0];
+		console.dir(svgElem);
 		var originalWidth = svgElem.width.animVal.value;
 		var originalHeight = svgElem.height.animVal.value;
 		var currentWidth = svgElem.clientWidth;
 		var currentHeight = svgElem.clientHeight;
 		var scaleRatioX = currentWidth / originalWidth;
 		var scaleRatioY = currentHeight / originalHeight;
-		var scaleRatio = Math.min(scaleRatioX,scaleRatioY);
-		var groups = document.getElementsByTagName('g');
-		for (i = 0; i < groups.length; i++) {
-			groups[i].setAttribute('transform','scale(' + scaleRatio + ' ' + scaleRatio + ')');
-		}
-	};
+		var scaleRatio = Math.min(scaleRatioX, scaleRatioY);
 
+		console.log('windowResized: from ' + originalWidth + ' ' + originalHeight +
+			' to ' + currentWidth + ' ' + currentHeight +
+			' ratio ' + scaleRatioX + ' ' + scaleRatioY + ' -> ' + scaleRatio);
+		console.log('offset w & h: ' + svgElem.offsetWidth + ' ' + svgElem.offsetHeight);
+		console.log('scroll w & h: ' + svgElem.scrollWidth + ' ' + svgElem.scrollHeight);
+		console.log('attribute: ' + svgElem.getAttribute('width'));
+	};
+*/
 	svgp.init = function(_slides) {
 		console.log('init');
+
 		svgp.globals.slides = _slides;
 		svgp.initGroupNames();
 		svgp.globals.slideCount = svgp.globals.slides.length;
-		document.addEventListener('keydown', function(evt) {svgPresenter.keypressed(evt);});
-		document.addEventListener('click', function(evt) {svgPresenter.mouseclicked(evt);});
-		document.addEventListener('touchend', function(evt) {svgPresenter.ontouchend(evt);});
-		document.addEventListener('touchmove', function(evt) {svgPresenter.ontouchmove(evt);});
-		document.addEventListener('touchstart', function(evt) {svgPresenter.ontouchstart(evt);});
-		//window.addEventListener('resize', function(evt) {svgPresenter.windowResized(evt);});
-		svgp.windowResized(null);
+
+		var svgElem = document.getElementsByTagName('svg')[0];
+		svgElem.setAttribute("preserveAspectRatio","xMinYMin meet");
+		svgElem.setAttribute('viewBox','0 0 ' + svgElem.width.animVal.value + ' ' + svgElem.height.animVal.value );
+
+		svgElem.addEventListener('keydown', function(evt) {svgPresenter.keypressed(evt);});
+		svgElem.addEventListener('click', function(evt) {svgPresenter.mouseclicked(evt);});
+		svgElem.addEventListener('touchend', function(evt) {svgPresenter.ontouchend(evt);});
+		svgElem.addEventListener('touchstart', function(evt) {svgPresenter.ontouchstart(evt);});
+//		svgElem.addEventListener('resize', function(evt) {svgPresenter.windowResized(evt);});
 		svgp.showSlide(svgp.globals.slideIdx);
 	};
 })();
