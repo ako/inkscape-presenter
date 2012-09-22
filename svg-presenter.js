@@ -47,7 +47,7 @@
 			groupName = groups[i].getAttributeNS(svgp.globals.inkscapeNS, 'label');
 
 			if (svgp.globals.groupNames.indexOf(groupName) !== -1) {
-				if (svgp.globals.slides[idx].indexOf(groupName) !== -1) {
+				if (svgp.globals.slides[idx].layers.indexOf(groupName) !== -1) {
 					groups[i].setAttribute('style', 'display:inline;');
 				} else {
 					groups[i].setAttribute('style', 'display:none;');
@@ -56,26 +56,29 @@
 		}
 	};
 
+	// determine all unique groupnames
 	svgp.initGroupNames = function() {
 		var i, j;
 		console.log('init groupNames');
 		svgp.globals.groupNames = [];
 		for (i = 0; i < svgp.globals.slides.length; i++) {
-			for (j = 0; j < svgp.globals.slides[i].length; j++) {
-				if (svgp.globals.groupNames.indexOf(svgp.globals.slides[i][j]) === -1) {
-					svgp.globals.groupNames.push(svgp.globals.slides[i][j]);
+			for (j = 0; j < svgp.globals.slides[i].layers.length; j++) {
+				if (svgp.globals.groupNames.indexOf(svgp.globals.slides[i].layers[j]) === -1) {
+					svgp.globals.groupNames.push(svgp.globals.slides[i].layers[j]);
 				}
 			}
 		}
 		console.log('All group names: ' + svgp.globals.groupNames);
 	};
 
+	// show next slide
 	svgp.nextSlide = function() {
 		console.log('nextSlide');
 		svgp.globals.slideIdx = ((svgp.globals.slideIdx + 1) % svgp.globals.slideCount);
 		svgp.showSlide(svgp.globals.slideIdx);
 	};
 
+	// show previous slide
 	svgp.previousSlide = function() {
 		console.log('previousSlide');
 		svgp.globals.slideIdx = (svgp.globals.slideIdx - 1);
@@ -87,16 +90,31 @@
 	svgp.keypressed = function(e) {
 		console.log('keypressed: ' + e);
 		var keyCode = e.keyCode ? e.keyCode : e.charCode;
+		console.log('keycode: ' + keyCode);
 		// 37 - cursor left
 		// 33 - logitech remote presentor back button
 		// 39 - cursor right
 		// 34 - logitech remote presentor forward button
+		// 70 - f - fullscreen
 		if (keyCode === 37 || keyCode === 33) {
 			svgp.previousSlide();
 		} else if (keyCode === 39 || keyCode === 34) {
 			svgp.nextSlide();
+		} else if (keyCode === 70 ) {
+			svgp.toggleFullscreenMode();
 		}
 	};
+	
+	// Toggle fullscreen mode for presentation, this is currently only
+	// supported in chrome
+	svgp.toggleFullscreenMode = function(){
+		console.log('toggleFullScreenMode');
+		var svgElem = document.getElementsByTagName('svg')[0];
+		if ( svgElem.webkitRequestFullScreen ) {
+			// TODO: this crashes chrome
+//			svgElem.webkitRequestFullScreen();
+		}
+	}
 
 	svgp.mouseclicked = function(evt) {
 		console.log('mouseclicked: ' + evt);
@@ -149,27 +167,6 @@
 		}
 	};
 
-	// Resize drawing to fit viewport
-/*
-	svgp.windowResized = function(evt) {
-		var svgElem = document.getElementsByTagName('svg')[0];
-		console.dir(svgElem);
-		var originalWidth = svgElem.width.animVal.value;
-		var originalHeight = svgElem.height.animVal.value;
-		var currentWidth = svgElem.clientWidth;
-		var currentHeight = svgElem.clientHeight;
-		var scaleRatioX = currentWidth / originalWidth;
-		var scaleRatioY = currentHeight / originalHeight;
-		var scaleRatio = Math.min(scaleRatioX, scaleRatioY);
-
-		console.log('windowResized: from ' + originalWidth + ' ' + originalHeight +
-			' to ' + currentWidth + ' ' + currentHeight +
-			' ratio ' + scaleRatioX + ' ' + scaleRatioY + ' -> ' + scaleRatio);
-		console.log('offset w & h: ' + svgElem.offsetWidth + ' ' + svgElem.offsetHeight);
-		console.log('scroll w & h: ' + svgElem.scrollWidth + ' ' + svgElem.scrollHeight);
-		console.log('attribute: ' + svgElem.getAttribute('width'));
-	};
-*/
 	svgp.init = function(_slides) {
 		console.log('init');
 
@@ -177,7 +174,11 @@
 		svgp.initGroupNames();
 		svgp.globals.slideCount = svgp.globals.slides.length;
 
+		// entire svg drawing should fit inside viewport
+		// gets the width and height of the original image, used to specify
+        // that all of the image should be inside the viewport
 		var svgElem = document.getElementsByTagName('svg')[0];
+		console.log('setting viewbox, using width: ' + svgElem.width.animVal.value + ' and height: ' + svgElem.height.animVal.value );
 		svgElem.setAttribute("preserveAspectRatio","xMinYMin meet");
 		svgElem.setAttribute('viewBox','0 0 ' + svgElem.width.animVal.value + ' ' + svgElem.height.animVal.value );
 
@@ -185,7 +186,6 @@
 		svgElem.addEventListener('click', function(evt) {svgPresenter.mouseclicked(evt);});
 		svgElem.addEventListener('touchend', function(evt) {svgPresenter.ontouchend(evt);});
 		svgElem.addEventListener('touchstart', function(evt) {svgPresenter.ontouchstart(evt);});
-//		svgElem.addEventListener('resize', function(evt) {svgPresenter.windowResized(evt);});
 		svgp.showSlide(svgp.globals.slideIdx);
 	};
 })();
