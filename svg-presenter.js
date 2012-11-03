@@ -36,7 +36,8 @@
 		touchStartX: 0,
 		touchStartY: 0,
 		touchEndX: 0,
-		touchEndY: 0
+		touchEndY: 0,
+		lastViewbox: 0
 	};
 
 	svgp.showSlide = function showSlide(idx) {
@@ -54,6 +55,54 @@
 				}
 			}
 		}
+		var viewportFrame = svgp.globals.slides[idx].display;
+		var notes = svgp.globals.slides[idx].notes;
+
+		// animate viewbox
+		var viewportRect = document.getElementById(viewportFrame);
+		console.log("changing viewbox to " + viewportFrame);
+		var viewbox = viewportRect.getAttribute('x') + " " +
+			 viewportRect.getAttribute('y') + " " +
+			 viewportRect.getAttribute('width') + " " +
+			 viewportRect.getAttribute('height') + " ";
+		console.log("animating viewbox: " + svgp.globals.lastViewbox + ";" + viewbox);
+
+		svgp.animateViewbox(svgp.globals.lastViewbox, viewbox );
+		svgp.globals.lastViewbox = viewbox;
+
+		// set title and notes
+		if(top.setTitleAndNotes){
+			top.setTitleAndNotes(svgp.globals.slides[idx].title,svgp.globals.slides[idx].notes,idx + 1,svgp.globals.slideCount);
+		}
+	};
+
+	svgp.animateViewbox = function(startViewbox,endViewbox){
+		if ( startViewbox == endViewbox ){
+			return;
+		}
+		// build animate element
+		var anim = document.getElementsByTagName("animate")[0];
+		if ( document.getElementsByTagName("animate").length == 0){
+			anim = document.createElementNS("http://www.w3.org/2000/svg", "animate");
+		} else {
+			anim = document.getElementById("anim");
+		}
+		anim.setAttribute("id","anim");
+		anim.setAttribute("attributeName","viewBox");
+		anim.setAttribute("dur","1s");
+		anim.setAttribute("values",startViewbox  + ";" + endViewbox);
+		anim.setAttribute("repeatCount","1");
+		anim.setAttribute("begin","indefinite");
+		anim.setAttribute("keyTimes","0;1");
+		anim.setAttribute("keySplines","0 .75 0.25 1");
+		anim.setAttribute("calcMode","spline");
+		anim.setAttribute("fill","freeze");
+
+		if(document.getElementsByTagName("animate").length == 0){
+			document.getElementsByTagName("svg")[0].appendChild(anim);
+		}
+		anim.beginElement();
+//		document.getElementsByTagName('svg')[0].setAttribute('viewBox',endViewbox);
 	};
 
 	// determine all unique groupnames
@@ -96,15 +145,25 @@
 		// 39 - cursor right
 		// 34 - logitech remote presentor forward button
 		// 70 - f - fullscreen
+		// 78 - n - show/hide notes
+		// 190 - logitech remote presentor black screen
 		if (keyCode === 37 || keyCode === 33) {
 			svgp.previousSlide();
 		} else if (keyCode === 39 || keyCode === 34) {
 			svgp.nextSlide();
 		} else if (keyCode === 70 ) {
 			svgp.toggleFullscreenMode();
+		} else if (keyCode === 78 || keyCode === 190 ) {
+			svgp.toggleNotes();
 		}
 	};
 	
+	// Toggle display of notes
+	svgp.toggleNotes = function(){
+		console.log("toggleNotes");
+		top.toggleNotesMode();
+	};
+
 	// Toggle fullscreen mode for presentation, this is currently only
 	// supported in chrome
 	svgp.toggleFullscreenMode = function(){
@@ -112,9 +171,9 @@
 		var svgElem = document.getElementsByTagName('svg')[0];
 		if ( svgElem.webkitRequestFullScreen ) {
 			// TODO: this crashes chrome
-//			svgElem.webkitRequestFullScreen();
+			svgElem.webkitRequestFullScreen();
 		}
-	}
+	};
 
 	svgp.mouseclicked = function(evt) {
 		console.log('mouseclicked: ' + evt);
@@ -167,26 +226,38 @@
 		}
 	};
 
+	svgp.mousemove = function(evt){
+		console.log("mousemove: " + evt.pageX + ", " + evt.pageY);
+	};
+
 	svgp.init = function(_slides) {
 		console.log('init');
 
 		svgp.globals.slides = _slides;
 		svgp.initGroupNames();
 		svgp.globals.slideCount = svgp.globals.slides.length;
-
+		console.log("Number of slides in deck: " + svgp.globals.slideCount);
 		// entire svg drawing should fit inside viewport
 		// gets the width and height of the original image, used to specify
         // that all of the image should be inside the viewport
 		var svgElem = document.getElementsByTagName('svg')[0];
-		console.log('setting viewbox, using width: ' + svgElem.width.animVal.value + ' and height: ' + svgElem.height.animVal.value );
+		console.log('setting viewbox, using width: ' 
+			+ svgElem.width.animVal.value + ' and height: ' + svgElem.height.animVal.value );
 		svgElem.setAttribute("preserveAspectRatio","xMinYMin meet");
-		svgElem.setAttribute('viewBox','0 0 ' + svgElem.width.animVal.value + ' ' + svgElem.height.animVal.value );
+		//svgElem.setAttribute('viewBox','0 0 ' + svgElem.width.animVal.value + ' ' + svgElem.height.animVal.value );
+		svgp.globals.lastViewbox = '0 0 ' + svgElem.width.animVal.value + ' ' + svgElem.height.animVal.value;
+		svgElem.setAttribute("width","1500px");
 
 		svgElem.addEventListener('keydown', function(evt) {svgPresenter.keypressed(evt);});
 		svgElem.addEventListener('click', function(evt) {svgPresenter.mouseclicked(evt);});
 		svgElem.addEventListener('touchend', function(evt) {svgPresenter.ontouchend(evt);});
 		svgElem.addEventListener('touchstart', function(evt) {svgPresenter.ontouchstart(evt);});
+		svgElem.addEventListener('touchmove', function(evt) {e.stopPropagation();});
+		//svgElem.addEventListener('mousemove',function(evt) {svgPresenter.mousemove(evt);});
 		svgp.showSlide(svgp.globals.slideIdx);
+		if (svgElem.focus){
+			svgElem.focus();
+		}
 	};
 })();
 
