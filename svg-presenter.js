@@ -23,6 +23,7 @@
 	var svgp = svgPresenter;
 
 	svgp.globals = {
+		title: '',
 		// current slide
 		slideIdx: 0,
 		// number of slides
@@ -43,6 +44,7 @@
 	svgp.showSlide = function showSlide(idx) {
 		var i, groupname;
 		console.log('showing slide: ' + idx);
+		svgp.globals.slideIdx = idx;
 		var groups = document.getElementsByTagName('g');
 		for (i = 0; i < groups.length; i++) {
 			groupName = groups[i].getAttributeNS(svgp.globals.inkscapeNS, 'label');
@@ -74,6 +76,7 @@
 		if(top.setTitleAndNotes){
 			top.setTitleAndNotes(svgp.globals.slides[idx].title,svgp.globals.slides[idx].notes,idx + 1,svgp.globals.slideCount);
 		}
+
 	};
 
 	svgp.animateViewbox = function(startViewbox,endViewbox){
@@ -125,6 +128,7 @@
 		console.log('nextSlide');
 		svgp.globals.slideIdx = ((svgp.globals.slideIdx + 1) % svgp.globals.slideCount);
 		svgp.showSlide(svgp.globals.slideIdx);
+		svgp.updateHistory();
 	};
 
 	// show previous slide
@@ -134,12 +138,14 @@
 		// workaround for javascript modulo behaviour
 		svgp.globals.slideIdx = ((svgp.globals.slideIdx % svgp.globals.slideCount) + svgp.globals.slideCount) % svgp.globals.slideCount;
 		svgp.showSlide(svgp.globals.slideIdx);
+		svgp.updateHistory();
 	};
 
 	svgp.keypressed = function(e) {
 		console.log('keypressed: ' + e);
 		var keyCode = e.keyCode ? e.keyCode : e.charCode;
 		console.log('keycode: ' + keyCode);
+		//
 		// 37 - cursor left
 		// 33 - logitech remote presentor back button
 		// 39 - cursor right
@@ -147,6 +153,8 @@
 		// 70 - f - fullscreen
 		// 78 - n - show/hide notes
 		// 190 - logitech remote presentor black screen
+		// 48 - 0 - reset to first slide
+		//
 		if (keyCode === 37 || keyCode === 33) {
 			svgp.previousSlide();
 		} else if (keyCode === 39 || keyCode === 34) {
@@ -155,9 +163,23 @@
 			svgp.toggleFullscreenMode();
 		} else if (keyCode === 78 || keyCode === 190 ) {
 			svgp.toggleNotes();
+		} else if (keyCode === 48 ){
+			svgp.globals.slideIdx = 0;
+			svgp.showSlide(svgp.globals.slideIdx);
+			svgp.updateHistory();
 		}
 	};
 	
+	svgp.updateHistory = function(){
+		// modify history
+		if(top.setUrlState){
+			top.setUrlState(
+				  svgp.globals.slideIdx
+				, svgp.globals.title + " - " + svgp.globals.slideIdx 
+				+ " - " + svgp.globals.slides[svgp.globals.slideIdx].title
+			);
+		}
+	}
 	// Toggle display of notes
 	svgp.toggleNotes = function(){
 		console.log("toggleNotes");
@@ -177,6 +199,9 @@
 
 	svgp.mouseclicked = function(evt) {
 		console.log('mouseclicked: ' + evt);
+		if (evt.touches){
+			return;
+		}
 		var svgElem = document.getElementsByTagName('svg')[0];
 		if (evt.clientX < (svgElem.width.baseVal.value / 2)) {
 			svgp.previousSlide();
@@ -196,8 +221,9 @@
 	svgp.ontouchend = function(evt) {
 		console.log('ontouchend: ' + evt + ', ' + evt.touches.length + ', ' + evt.changedTouches.length);
 		var distX;
-
+		evt.stopPropagation();
 		if (evt.changedTouches.length === 1) {
+
 			svgp.globals.touchEndX = evt.changedTouches[0].pageX;
 			svgp.globals.touchEndY = evt.changedTouches[0].pageY;
 
@@ -230,10 +256,11 @@
 		console.log("mousemove: " + evt.pageX + ", " + evt.pageY);
 	};
 
-	svgp.init = function(_slides) {
-		console.log('init');
+	svgp.init = function(_slides,_title) {
+		console.log('init:' + _title	);
 
 		svgp.globals.slides = _slides;
+		svgp.globals.title = _title;
 		svgp.initGroupNames();
 		svgp.globals.slideCount = svgp.globals.slides.length;
 		console.log("Number of slides in deck: " + svgp.globals.slideCount);
@@ -249,14 +276,23 @@
 		svgElem.setAttribute("width","1500px");
 
 		svgElem.addEventListener('keydown', function(evt) {svgPresenter.keypressed(evt);});
-		svgElem.addEventListener('click', function(evt) {svgPresenter.mouseclicked(evt);});
-		svgElem.addEventListener('touchend', function(evt) {svgPresenter.ontouchend(evt);});
-		svgElem.addEventListener('touchstart', function(evt) {svgPresenter.ontouchstart(evt);});
-		svgElem.addEventListener('touchmove', function(evt) {e.stopPropagation();});
+		if ('ontouchstart' in window ){
+			svgElem.addEventListener('touchend', function(evt) {svgPresenter.ontouchend(evt);});
+			svgElem.addEventListener('touchstart', function(evt) {svgPresenter.ontouchstart(evt);});
+			svgElem.addEventListener('touchmove', function(evt) {evt.stopPropagation();});
+		} else {
+			svgElem.addEventListener('click', function(evt) {svgPresenter.mouseclicked(evt);});
+		}
 		//svgElem.addEventListener('mousemove',function(evt) {svgPresenter.mousemove(evt);});
+		if(top.getUrlSlideIdx){
+			svgp.globals.slideIdx = top.getUrlSlideIdx();
+		}
 		svgp.showSlide(svgp.globals.slideIdx);
 		if (svgElem.focus){
 			svgElem.focus();
+		}
+		if(top){
+			top.presentation = svgp;
 		}
 	};
 })();
