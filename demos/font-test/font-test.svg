@@ -245,11 +245,19 @@
        inkscape:connector-curvature="0" />
   </g>
   <script
+     xlink:href="../../libs/sizzle.js"
+     type="text/ecmascript"
+     id="script28" />
+  <script
+     xlink:href="../../libs/dollar.js"
+     type="text/ecmascript"
+     id="script27" />
+  <script
      xlink:href="font-test-presentation.js"
      type="text/ecmascript"
      id="script25" />
   <script
-     xlink:href="svg-presenter.js"
+     xlink:href="../../svg-presenter.js"
      type="text/ecmascript"
      id="script26" />
 </svg>

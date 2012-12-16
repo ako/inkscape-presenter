@@ -1,0 +1,19 @@
+html { width:100%; height:75%; overflow: hidden; background-color: white;}
+body {
+	width:100%; height:100%; padding:0; margin:0;
+	background-color: white;
+	overflow: hidden; 
+}
+body object {width: 100%; height: 100%; z-index: 1; position: absolute; top: 0; left:0; background-color: white;}
+div#logobar {position:fixed; top: 0; left:0; z-index: 3; width:100%; height: 5em; background-color: rgba(210,210,210,0.5);}
+img#logo {position:fixed; top: 0; left:0; z-index: 4; margin: 7px;}
+div#notes { color: black;
+	display: none; 
+	position: fixed; z-index: 5; top: 0; height: 5em; right: 0; width: 90%; 
+	border: 0px solid black;
+	font: 16px Helvetica;
+}
+div#notes h1 {margin: 1px; padding: 1px; font-size: 18px; }
+div#notes div {margin: 1px; padding: 1px; font-size: 14px; width: 90%; }
+span#pagecounter { position:fixed; top:0; right: 0; background-color: rgba(210,210,210,0.5); margin: 1px; padding: 1px;}
+
