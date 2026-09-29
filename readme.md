@@ -15,11 +15,21 @@ window.
 
 Keys:
 
-* next: right, down, page down, space, enter
-* previous: left, up, page up, backspace
+* next (step or slide): right, down, page down, space, enter
+* previous (step or slide): left, up, page up, backspace
 * first / last: home or 0 / end
 * f: fullscreen
 * n or .: show or hide the notes
+
+## Build steps
+
+To let parts of a slide appear one at a time, put them in sublayers (or
+groups) inside the slide layer and label them `step 1`, `step 2`, and so on.
+Next and previous then go through the steps before moving to another slide;
+going back shows the previous slide complete. Steps with the same number
+appear together, and steps without a number come last. Steps play on the
+slide where their layer first appears; a slide that repeats the layers of the
+slide before it shows them complete. See the drawing1 demo.
 
 Include this script in your svg file at the end as follows:
 

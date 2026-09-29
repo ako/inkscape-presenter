@@ -36,6 +36,10 @@
 		sodipodiNS: 'http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd',
 		// current view of the drawing {x, y, w, h}; the svg viewBox follows it
 		camera: null,
+		// build steps of the current slide, in reveal order: arrays of groups
+		steps: [],
+		// number of steps revealed on the current slide
+		stepIdx: 0,
 		drawingPoints: [],
 		pathId: 0
 	};
@@ -49,7 +53,9 @@
 	var svgNS = 'http://www.w3.org/2000/svg';
 	var svgRoot = function() { return document.documentElement; };
 
-	svgp.showSlide = function showSlide(idx) {
+	// Show a slide with none of its build steps, or with all of them when
+	// atEnd is set (used when going back).
+	svgp.showSlide = function showSlide(idx, atEnd) {
 		var slide = svgp.globals.slides[idx];
 		if (!slide) {
 			return;
@@ -68,6 +74,9 @@
 				}
 			}
 		}
+		svgp.globals.steps = svgp.stepsFor(idx);
+		svgp.globals.stepIdx = atEnd ? svgp.globals.steps.length : 0;
+		svgp.applySteps();
 
 		// move the camera to the slide's frame
 		var frame = slide.display && document.getElementById(slide.display);
@@ -105,6 +114,83 @@
 			svgRoot().appendChild(layer);
 		}
 		layer.setAttribute('style', 'display:inline;');
+	};
+
+	/*---------------- build steps ----------------*/
+
+	// Groups or sublayers labelled "step 1", "step 2", ... inside a slide
+	// layer appear one at a time, in the order of their numbers; groups with
+	// the same number appear together, unnumbered ones last in document
+	// order. Steps play on the slide where their layer is new; slides that
+	// carry the layer over from the previous slide show it complete.
+	var stepLabel = /^step\b\s*(\d+(\.\d+)?)?/i;
+
+	svgp.stepsFor = function(idx) {
+		var inkscapeNS = svgp.globals.inkscapeNS;
+		var layers = svgp.globals.slides[idx].layers;
+		var previous = idx > 0 ? svgp.globals.slides[idx - 1].layers : [];
+		var byKey = {}, keys = [], unnumbered = 0;
+		var groups = document.getElementsByTagName('g');
+		for (var i = 0; i < groups.length; i++) {
+			var label = groups[i].getAttributeNS(inkscapeNS, 'label');
+			if (layers.indexOf(label) === -1 || previous.indexOf(label) !== -1) {
+				continue;
+			}
+			var inner = groups[i].getElementsByTagName('g');
+			for (var j = 0; j < inner.length; j++) {
+				var m = stepLabel.exec(inner[j].getAttributeNS(inkscapeNS, 'label') || '');
+				if (!m) {
+					continue;
+				}
+				var key = m[1] !== undefined ? parseFloat(m[1]) : Infinity + ':' + unnumbered++;
+				if (!byKey[key]) {
+					byKey[key] = [];
+					keys.push(key);
+				}
+				byKey[key].push(inner[j]);
+			}
+		}
+		keys.sort(function(a, b) {
+			var na = typeof a === 'number', nb = typeof b === 'number';
+			return na && nb ? a - b : na ? -1 : nb ? 1 : 0;
+		});
+		return keys.map(function(key) { return byKey[key]; });
+	};
+
+	// hide the steps of the current slide that are not revealed yet
+	svgp.applySteps = function() {
+		var hidden = document.querySelectorAll('.svgp-step-hidden');
+		for (var i = 0; i < hidden.length; i++) {
+			hidden[i].classList.remove('svgp-step-hidden');
+		}
+		svgp.globals.steps.forEach(function(step, j) {
+			step.forEach(function(g) {
+				g.classList.add('svgp-step');
+				if (j >= svgp.globals.stepIdx) {
+					g.classList.add('svgp-step-hidden');
+				}
+			});
+		});
+	};
+
+	// next build step, or the next slide when all steps are showing
+	svgp.next = function() {
+		if (svgp.globals.stepIdx < svgp.globals.steps.length) {
+			svgp.globals.stepIdx++;
+			svgp.applySteps();
+		} else {
+			svgp.nextSlide();
+		}
+	};
+
+	// previous build step, or the previous slide with all its steps showing
+	svgp.previous = function() {
+		if (svgp.globals.stepIdx > 0) {
+			svgp.globals.stepIdx--;
+			svgp.applySteps();
+		} else {
+			svgp.previousSlide();
+		}
 	};
 
 	/*---------------- camera ----------------*/
@@ -212,14 +298,14 @@
 		svgp.globals.slideIdx = (svgp.globals.slideIdx - 1);
 		// workaround for javascript modulo behaviour
 		svgp.globals.slideIdx = ((svgp.globals.slideIdx % svgp.globals.slideCount) + svgp.globals.slideCount) % svgp.globals.slideCount;
-		svgp.showSlide(svgp.globals.slideIdx);
+		svgp.showSlide(svgp.globals.slideIdx, true);
 		svgp.updateHistory();
 	};
 
 	// jump to a slide by index
-	svgp.goToSlide = function(idx) {
+	svgp.goToSlide = function(idx, atEnd) {
 		svgp.globals.slideIdx = idx;
-		svgp.showSlide(svgp.globals.slideIdx);
+		svgp.showSlide(svgp.globals.slideIdx, atEnd);
 		svgp.updateHistory();
 	};
 
@@ -228,18 +314,18 @@
 	// Presenter remotes send PageUp / PageDown, and '.' for their black
 	// screen button.
 	var keyActions = {
-		ArrowRight: function() { svgp.nextSlide(); },
-		ArrowDown: function() { svgp.nextSlide(); },
-		PageDown: function() { svgp.nextSlide(); },
-		' ': function() { svgp.nextSlide(); },
-		Enter: function() { svgp.nextSlide(); },
-		ArrowLeft: function() { svgp.previousSlide(); },
-		ArrowUp: function() { svgp.previousSlide(); },
-		PageUp: function() { svgp.previousSlide(); },
-		Backspace: function() { svgp.previousSlide(); },
+		ArrowRight: function() { svgp.next(); },
+		ArrowDown: function() { svgp.next(); },
+		PageDown: function() { svgp.next(); },
+		' ': function() { svgp.next(); },
+		Enter: function() { svgp.next(); },
+		ArrowLeft: function() { svgp.previous(); },
+		ArrowUp: function() { svgp.previous(); },
+		PageUp: function() { svgp.previous(); },
+		Backspace: function() { svgp.previous(); },
 		Home: function() { svgp.goToSlide(0); },
 		'0': function() { svgp.goToSlide(0); },
-		End: function() { svgp.goToSlide(svgp.globals.slideCount - 1); },
+		End: function() { svgp.goToSlide(svgp.globals.slideCount - 1, true); },
 		f: function() { svgp.toggleFullscreenMode(); },
 		n: function() { svgp.toggleNotes(); },
 		'.': function() { svgp.toggleNotes(); }
@@ -372,9 +458,9 @@
 			// a tap: left half goes back, right half goes forward
 			var box = svgRoot().getBoundingClientRect();
 			if (evt.clientX < box.left + box.width / 2) {
-				svgp.previousSlide();
+				svgp.previous();
 			} else {
-				svgp.nextSlide();
+				svgp.next();
 			}
 			return;
 		}
@@ -394,9 +480,9 @@
 			var result = svgp.recognizer.Recognize(svgp.globals.drawingPoints);
 			console.log('recognizer: ' + result.Name);
 			if(result.Name == "arrowright" || result.Name == "lineright" || result.Name == "check"){
-				svgp.nextSlide();
+				svgp.next();
 			} else if (result.Name == "arrowleft" || result.Name == "lineleft" || result.Name == "triangle"){
-				svgp.previousSlide();
+				svgp.previous();
 			} else if (result.Name == "zig-zag") {
 				svgp.toggleNotes();
 			} else if (result.Name == "circle") {
@@ -440,6 +526,12 @@
 		svgElem.style.touchAction = 'none';
 		svgElem.style.userSelect = 'none';
 		svgElem.style.webkitUserSelect = 'none';
+
+		// build steps fade in and out
+		var style = document.createElementNS(svgNS, 'style');
+		style.textContent = (reduceMotion ? '' : '.svgp-step{transition:opacity .45s ease}')
+			+ '.svgp-step-hidden{opacity:0!important;pointer-events:none}';
+		svgElem.insertBefore(style, svgElem.firstChild);
 
 		window.addEventListener('keydown', svgp.keypressed);
 		svgElem.addEventListener('pointerdown', svgp.pointerdown);
