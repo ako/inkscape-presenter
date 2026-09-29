@@ -7,9 +7,19 @@ can reuse layers on multiple slides, displayed multiple layers on one slide.
 Script expects slide layers to be named starting with slide. This allows you
 to use non-slide layers.
 
-You can navigate your presentation by pressing the mouse button (chromium,
-firefox), or pressing cursor left, right (firefox) or by using a remote
-control (firefox).
+You can navigate your presentation by clicking or tapping (right half goes
+forward, left half goes back), with the keyboard, or with a presenter remote.
+Dragging with the mouse, pen or a finger draws on the slide. The camera
+glides between the frames of the slides, and the drawing scales to fit the
+window.
+
+Keys:
+
+* next: right, down, page down, space, enter
+* previous: left, up, page up, backspace
+* first / last: home or 0 / end
+* f: fullscreen
+* n or .: show or hide the notes
 
 Include this script in your svg file at the end as follows:
 
@@ -23,7 +33,7 @@ Include this script in your svg file at the end as follows:
 3. create a javascript file to define the structure of your presentation. You need to create a nested array containing the names of the layers you want to display for each slide. See the example.
 4. add a script elements at the end of your svg file to load your presentation structure and the svg-presenter.js file
 5. open in a browser (tested using chromium and firefox and safari on iPad)
-6. press mousebutton to see next slide (or arrow keys, or page-up/page-down, or you can use touch on an iPad)
+6. click or tap to see the next slide (or use the keys above, or a presenter remote)
 
 ## Resources
 

@@ -53,3 +53,10 @@ console.log("window.onload: " + window.onload);
 //window.onload(onLoadListener);
 //window.onEventListener("load",window,function(){console.log("hi there!");});
 onLoadListener();
+
+// keys pressed while the page (not the svg) has focus still drive the slides
+window.addEventListener("keydown", function(evt){
+	if (window.presentation && presentation.keypressed){
+		presentation.keypressed(evt);
+	}
+}, false);

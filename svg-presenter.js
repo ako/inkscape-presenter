@@ -34,20 +34,9 @@
 		groupNames: [],
 		inkscapeNS: 'http://www.inkscape.org/namespaces/inkscape',
 		sodipodiNS: 'http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd',
-		touchStartX: 0,
-		touchStartY: 0,
-		touchEndX: 0,
-		touchEndY: 0,
-		lastViewbox: 0,
-		lastViewboxX: 0,
-		lastViewboxY: 0,
-		lastViewboxWidth: 0,
-		lastViewboxHeight: 0,
-		points: [],
-		touchPrevX: 0,
-		touchPrevY: 0,
+		// current view of the drawing {x, y, w, h}; the svg viewBox follows it
+		camera: null,
 		drawingPoints: [],
-		isDrawing: false,
 		pathId: 0
 	};
 
@@ -57,41 +46,39 @@
 	svgp.recognizer.AddGesture("lineleft",eval('[{"X":-125.00000000000011,"Y":null},{"X":-121.03174603174615,"Y":null},{"X":-117.06349206349218,"Y":null},{"X":-113.09523809523819,"Y":null},{"X":-109.12698412698424,"Y":null},{"X":-105.15873015873028,"Y":null},{"X":-101.1904761904763,"Y":null},{"X":-97.22222222222233,"Y":null},{"X":-93.25396825396837,"Y":null},{"X":-89.28571428571439,"Y":null},{"X":-85.31746031746043,"Y":null},{"X":-81.34920634920647,"Y":null},{"X":-77.3809523809525,"Y":null},{"X":-73.41269841269853,"Y":null},{"X":-69.44444444444456,"Y":null},{"X":-65.47619047619058,"Y":null},{"X":-61.507936507936606,"Y":null},{"X":-57.539682539682616,"Y":null},{"X":-53.57142857142864,"Y":null},{"X":-49.603174603174665,"Y":null},{"X":-45.63492063492069,"Y":null},{"X":-41.6666666666667,"Y":null},{"X":-37.69841269841274,"Y":null},{"X":-33.730158730158735,"Y":null},{"X":-29.76190476190476,"Y":null},{"X":-25.793650793650784,"Y":null},{"X":-21.82539682539681,"Y":null},{"X":-17.857142857142833,"Y":null},{"X":-13.888888888888857,"Y":null},{"X":-9.920634920634882,"Y":null},{"X":-5.952380952380878,"Y":null},{"X":-1.9841269841269025,"Y":null},{"X":1.984126984127073,"Y":null},{"X":5.9523809523810485,"Y":null},{"X":9.920634920635024,"Y":null},{"X":13.888888888889,"Y":null},{"X":17.857142857142975,"Y":null},{"X":21.82539682539695,"Y":null},{"X":25.793650793650954,"Y":null},{"X":29.76190476190493,"Y":null},{"X":33.73015873015888,"Y":null},{"X":37.698412698412824,"Y":null},{"X":41.6666666666668,"Y":null},{"X":45.634920634920746,"Y":null},{"X":49.60317460317469,"Y":null},{"X":53.57142857142867,"Y":null},{"X":57.539682539682616,"Y":null},{"X":61.50793650793659,"Y":null},{"X":65.47619047619054,"Y":null},{"X":69.44444444444449,"Y":null},{"X":73.41269841269846,"Y":null},{"X":77.38095238095241,"Y":null},{"X":81.34920634920636,"Y":null},{"X":85.31746031746033,"Y":null},{"X":89.28571428571425,"Y":null},{"X":93.25396825396822,"Y":null},{"X":97.2222222222222,"Y":null},{"X":101.19047619047612,"Y":null},{"X":105.1587301587301,"Y":null},{"X":109.12698412698407,"Y":null},{"X":113.09523809523805,"Y":null},{"X":117.06349206349196,"Y":null},{"X":121.03174603174594,"Y":null},{"X":124.99999999999991,"Y":null}]'));
     svgp.recognizer.AddGesture("lineright",eval('[{"X":-125.01708912397322,"Y":-1.4551915228366852e-11},{"X":-121.04819332481974,"Y":0.6186191252927529},{"X":-117.07929752566623,"Y":1.2372382506000577},{"X":-113.11040172651273,"Y":1.8558573759219144},{"X":-109.14150592735925,"Y":2.474476501243771},{"X":-105.17261012820576,"Y":3.093095626551076},{"X":-101.20371432905226,"Y":3.7117147518583806},{"X":-97.23481852989877,"Y":4.330333877165685},{"X":-93.26592273074527,"Y":4.948953002502094},{"X":-89.2970269315918,"Y":5.567572127809399},{"X":-85.3281311324383,"Y":6.186191253116704},{"X":-81.3592353332848,"Y":6.804810378424008},{"X":-77.39033953413133,"Y":7.423429503745865},{"X":-73.42144373497783,"Y":8.042048629067722},{"X":-69.45254793582436,"Y":8.660667754375027},{"X":-65.48365213667086,"Y":9.279286879682331},{"X":-61.514756337517355,"Y":9.897906004989636},{"X":-57.54586053836388,"Y":10.516525130326045},{"X":-53.57696473921038,"Y":11.13514425563335},{"X":-49.60806894005691,"Y":11.753763380940654},{"X":-45.63917314090341,"Y":12.372382506247959},{"X":-41.67027734174991,"Y":12.991001631569816},{"X":-37.70138154259641,"Y":13.609620756891672},{"X":-33.732485743442936,"Y":14.228239882198977},{"X":-29.763589944289464,"Y":14.846859007506282},{"X":-25.794694145135963,"Y":15.465478132828139},{"X":-21.825798345982463,"Y":16.084097258135444},{"X":-17.856902546828962,"Y":16.7027163834573},{"X":-13.88800674767549,"Y":17.321335508764605},{"X":-9.919110948522018,"Y":17.93995463407191},{"X":-5.950215149368518,"Y":18.558573759393767},{"X":-1.981319350215017,"Y":19.177192884715623},{"X":1.9875764489384835,"Y":19.795812010022928},{"X":5.956472248091956,"Y":20.414431135330233},{"X":9.925368047245428,"Y":21.03305026065209},{"X":13.894263846398928,"Y":21.651669385959394},{"X":17.86315964555243,"Y":22.27028851128125},{"X":21.8320554447059,"Y":22.888907636588556},{"X":25.80095124385943,"Y":23.507526761910412},{"X":29.769847043012874,"Y":24.126145887217717},{"X":33.7387428421664,"Y":24.744765012525022},{"X":37.707638641319875,"Y":25.36338413784688},{"X":41.67653444047335,"Y":25.982003263154184},{"X":45.645430239626876,"Y":26.60062238847604},{"X":49.61432603878035,"Y":27.219241513783345},{"X":53.58322183793388,"Y":27.8378606391052},{"X":57.55211763708735,"Y":28.456479764412506},{"X":61.52101343624082,"Y":29.075098889734363},{"X":65.4899092353943,"Y":29.693718015041668},{"X":69.45880503454777,"Y":30.312337140348973},{"X":73.4277008337013,"Y":30.93095626567083},{"X":77.39659663285477,"Y":31.549575390992686},{"X":81.36549243200824,"Y":32.16819451629999},{"X":85.33438823116177,"Y":32.786813641607296},{"X":89.30328403031524,"Y":33.4054327669146},{"X":93.27217982946871,"Y":34.02405189223646},{"X":97.24107562862224,"Y":34.642671017558314},{"X":101.20997142777577,"Y":35.26129014286562},{"X":105.16767370517289,"Y":-33.84013151707768},{"X":109.12047077536738,"Y":-133.49415794949164},{"X":113.07622347856625,"Y":-214.73870985713438},{"X":117.04511927771978,"Y":-214.12009073181252},{"X":121.0140150768733,"Y":-213.50147160650522},{"X":124.98291087602678,"Y":-212.88285248118336}]'));
 
+	var svgNS = 'http://www.w3.org/2000/svg';
+	var svgRoot = function() { return document.documentElement; };
+
 	svgp.showSlide = function showSlide(idx) {
-		var i, groupname;
+		var slide = svgp.globals.slides[idx];
+		if (!slide) {
+			return;
+		}
 		console.log('showing slide: ' + idx);
 		svgp.globals.slideIdx = idx;
 		var groups = document.getElementsByTagName('g');
-		for (i = 0; i < groups.length; i++) {
-			groupName = groups[i].getAttributeNS(svgp.globals.inkscapeNS, 'label');
+		for (var i = 0; i < groups.length; i++) {
+			var groupName = groups[i].getAttributeNS(svgp.globals.inkscapeNS, 'label');
 
 			if (svgp.globals.groupNames.indexOf(groupName) !== -1) {
-				if (svgp.globals.slides[idx].layers.indexOf(groupName) !== -1) {
+				if (slide.layers.indexOf(groupName) !== -1) {
 					groups[i].setAttribute('style', 'display:inline;');
 				} else {
 					groups[i].setAttribute('style', 'display:none;');
 				}
 			}
 		}
-		var viewportFrame = svgp.globals.slides[idx].display;
-		var notes = svgp.globals.slides[idx].notes;
 
-		// animate viewbox
-		var viewportRect = document.getElementById(viewportFrame);
-		if(viewportRect){
-			console.log("changing viewbox to " + viewportFrame);
-			var viewbox = viewportRect.getAttribute('x') + " " +
-				viewportRect.getAttribute('y') + " " +
-				viewportRect.getAttribute('width') + " " +
-				viewportRect.getAttribute('height') + " ";
-			console.log("animating viewbox: " + svgp.globals.lastViewbox + ";" + viewbox);
-
-			svgp.animateViewbox(svgp.globals.lastViewbox, viewbox );
-			svgp.globals.lastViewbox = viewbox;
-			svgp.globals.lastViewboxX = viewportRect.getAttribute('x');
-			svgp.globals.lastViewboxY = viewportRect.getAttribute('y');
-			svgp.globals.lastViewboxWidth = viewportRect.getAttribute('width');
-			svgp.globals.lastViewboxHeight = viewportRect.getAttribute('height');
+		// move the camera to the slide's frame
+		var frame = slide.display && document.getElementById(slide.display);
+		if (frame) {
+			console.log('moving camera to ' + slide.display);
+			svgp.flyTo({
+				x: parseFloat(frame.getAttribute('x')) || 0,
+				y: parseFloat(frame.getAttribute('y')) || 0,
+				w: parseFloat(frame.getAttribute('width')),
+				h: parseFloat(frame.getAttribute('height'))
+			});
 		}
 
 		// set title and notes
@@ -99,83 +86,101 @@
 	//		top.setTitleAndNotes(svgp.globals.slides[idx].title,svgp.globals.slides[idx].notes,idx + 1,svgp.globals.slideCount);
 		}
 
-		svgp.showViewBoxDrawingLayer("drawing-"+ svgp.globals.slideIdx);
+		svgp.showDrawingLayer('drawing-' + svgp.globals.slideIdx);
 	};
 
 	/**
-	* Show a layer on which user can draw with a pen. Layer should be the size
-	* of the viewbox. Layer is created if missing.
+	* Show the layer the presenter draws on for the current slide, creating it
+	* when missing. Drawing layers of other slides are hidden.
 	*/
-	svgp.showViewBoxDrawingLayer = function(layerId){
-		var viewBox = Sizzle("svg")[0].getAttribute("viewBox");
-		var viewBoxCoors = [];
-		if (viewBox){
-			viewBoxCoords = viewBox.split(/\s+|,/);
-		} else {
-			viewBoxCoords = [0,0,Sizzle("svg")[0].getAttribute("width"),Sizzle("svg")[0].getAttribute("height")]; 
-		}
-		svgp.showDrawingLayer("drawing-" + svgp.globals.slideIdx
-			, viewBoxCoords[0]
-			, viewBoxCoords[1] 
-			, viewBoxCoords[2] 
-			, viewBoxCoords[3] 
-			);
-	}
-	/**
-	*
-	*/
-	svgp.showDrawingLayer = function(layerId,x,y,width,height){
-		// hide existing layers
-		var layers = Sizzle("g[id^=drawing]");
-		console.log("found # drawing layers " + layers.length);
-		for (var i=0; i < layers.length; i++){
+	svgp.showDrawingLayer = function(layerId){
+		var layers = document.querySelectorAll('g[id^="drawing-"]');
+		for (var i = 0; i < layers.length; i++) {
 			layers[i].setAttribute('style', 'display:none;');
 		}
-
-		//show active layer
-		var layer = Sizzle("g[id=" + layerId + "]");
-		console.log("found layer: " + layer);
-		if (layer.length == 0){
-			layer = document.createElementNS("http://www.w3.org/2000/svg","g");
-			layer.setAttribute("id",layerId);
-			layer.setAttribute("style","background-color: red;");
-
-			var lastG = Sizzle("svg")[0];
-			console.log("lastG: " + lastG.getAttribute("id"));
-			lastG.appendChild(layer);
-		} else {
-			console.log("found layer: " + layer[0].getAttribute("id"));
-			layer[0].setAttribute('style', 'display:inline;');
+		var layer = document.getElementById(layerId);
+		if (!layer) {
+			layer = document.createElementNS(svgNS, 'g');
+			layer.setAttribute('id', layerId);
+			svgRoot().appendChild(layer);
 		}
+		layer.setAttribute('style', 'display:inline;');
+	};
+
+	/*---------------- camera ----------------*/
+
+	var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	var cameraFrame = 0;
+
+	svgp.setCamera = function(view) {
+		svgp.globals.camera = view;
+		svgRoot().setAttribute('viewBox', [view.x, view.y, view.w, view.h].map(function(v) {
+			return Math.round(v * 1000) / 1000;
+		}).join(' '));
+	};
+
+	// Smooth zoom and pan between two views [centerX, centerY, width], after
+	// van Wijk and Nuij, "Smooth and efficient zooming and panning" (2003):
+	// long moves zoom out, travel and zoom back in.
+	function interpolateZoom(p0, p1) {
+		var rho = Math.SQRT2;
+		var ux0 = p0[0], uy0 = p0[1], w0 = p0[2], ux1 = p1[0], uy1 = p1[1], w1 = p1[2];
+		var dx = ux1 - ux0, dy = uy1 - uy0, d2 = dx * dx + dy * dy;
+		var interpolate, S;
+		if (d2 < 1e-12) {
+			S = Math.log(w1 / w0) / rho;
+			interpolate = function(t) { return [ux0 + t * dx, uy0 + t * dy, w0 * Math.exp(rho * t * S)]; };
+		} else {
+			var d1 = Math.sqrt(d2);
+			var b0 = (w1 * w1 - w0 * w0 + 4 * d2) / (2 * w0 * 2 * d1);
+			var b1 = (w1 * w1 - w0 * w0 - 4 * d2) / (2 * w1 * 2 * d1);
+			var r0 = Math.log(Math.sqrt(b0 * b0 + 1) - b0);
+			var r1 = Math.log(Math.sqrt(b1 * b1 + 1) - b1);
+			S = (r1 - r0) / rho;
+			interpolate = function(t) {
+				var s = t * S, c0 = Math.cosh(r0);
+				var u = w0 / (2 * d1) * (c0 * Math.tanh(rho * s + r0) - Math.sinh(r0));
+				return [ux0 + u * dx, uy0 + u * dy, w0 * c0 / Math.cosh(rho * s + r0)];
+			};
+		}
+		interpolate.duration = Math.abs(S) * 1000;
+		return interpolate;
 	}
 
-	svgp.animateViewbox = function(startViewbox,endViewbox){
-		if ( startViewbox == endViewbox ){
+	function easeInOut(t) {
+		return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+	}
+
+	// Animate the camera to a view {x, y, w, h}. The aspect ratio blends from
+	// the old view to the new one; preserveAspectRatio keeps it letterboxed.
+	svgp.flyTo = function(target, instant) {
+		cancelAnimationFrame(cameraFrame);
+		var from = svgp.globals.camera;
+		if (!from || instant || reduceMotion) {
+			svgp.setCamera(target);
 			return;
 		}
-		// build animate element
-		var anim = document.getElementsByTagName("animate")[0];
-		if ( document.getElementsByTagName("animate").length == 0){
-			anim = document.createElementNS("http://www.w3.org/2000/svg", "animate");
-		} else {
-			anim = document.getElementById("anim");
+		var zoom = interpolateZoom(
+			[from.x + from.w / 2, from.y + from.h / 2, from.w],
+			[target.x + target.w / 2, target.y + target.h / 2, target.w]);
+		if (!zoom.duration && from.h / from.w === target.h / target.w) {
+			svgp.setCamera(target);
+			return;
 		}
-		anim.setAttribute("id","anim");
-		anim.setAttribute("attributeName","viewBox");
-		anim.setAttribute("dur","1s");
-		anim.setAttribute("values",startViewbox  + ";" + endViewbox);
-		anim.setAttribute("repeatCount","1");
-		anim.setAttribute("begin","indefinite");
-		anim.setAttribute("keyTimes","0;1");
-		anim.setAttribute("keySplines","0 .75 0.25 1");
-		anim.setAttribute("calcMode","spline");
-		anim.setAttribute("fill","freeze");
-
-		if(document.getElementsByTagName("animate").length == 0){
-			document.getElementsByTagName("svg")[0].appendChild(anim);
-		}
-		anim.beginElement();
-//		document.getElementsByTagName('svg')[0].setAttribute('viewBox',endViewbox);
+		var aspect0 = from.h / from.w, aspect1 = target.h / target.w;
+		var duration = Math.min(2000, Math.max(550, zoom.duration * 0.85));
+		var t0 = performance.now();
+		var step = function(now) {
+			var k = Math.min(1, (now - t0) / duration);
+			if (k === 1) {
+				svgp.setCamera(target);
+				return;
+			}
+			var e = easeInOut(k), view = zoom(e), w = view[2], h = w * (aspect0 + (aspect1 - aspect0) * e);
+			svgp.setCamera({ x: view[0] - w / 2, y: view[1] - h / 2, w: w, h: h });
+			cameraFrame = requestAnimationFrame(step);
+		};
+		cameraFrame = requestAnimationFrame(step);
 	};
 
 	// determine all unique groupnames
@@ -211,41 +216,52 @@
 		svgp.updateHistory();
 	};
 
+	// jump to a slide by index
+	svgp.goToSlide = function(idx) {
+		svgp.globals.slideIdx = idx;
+		svgp.showSlide(svgp.globals.slideIdx);
+		svgp.updateHistory();
+	};
+
+	/*---------------- keyboard ----------------*/
+
+	// Presenter remotes send PageUp / PageDown, and '.' for their black
+	// screen button.
+	var keyActions = {
+		ArrowRight: function() { svgp.nextSlide(); },
+		ArrowDown: function() { svgp.nextSlide(); },
+		PageDown: function() { svgp.nextSlide(); },
+		' ': function() { svgp.nextSlide(); },
+		Enter: function() { svgp.nextSlide(); },
+		ArrowLeft: function() { svgp.previousSlide(); },
+		ArrowUp: function() { svgp.previousSlide(); },
+		PageUp: function() { svgp.previousSlide(); },
+		Backspace: function() { svgp.previousSlide(); },
+		Home: function() { svgp.goToSlide(0); },
+		'0': function() { svgp.goToSlide(0); },
+		End: function() { svgp.goToSlide(svgp.globals.slideCount - 1); },
+		f: function() { svgp.toggleFullscreenMode(); },
+		n: function() { svgp.toggleNotes(); },
+		'.': function() { svgp.toggleNotes(); }
+	};
+
 	svgp.keypressed = function(e) {
-		console.log('keypressed: ' + e);
-		var keyCode = e.keyCode ? e.keyCode : e.charCode;
-		console.log('keycode: ' + keyCode);
-		//
-		// 37 - cursor left
-		// 33 - logitech remote presentor back button
-		// 39 - cursor right
-		// 34 - logitech remote presentor forward button
-		// 70 - f - fullscreen
-		// 78 - n - show/hide notes
-		// 190 - logitech remote presentor black screen
-		// 48 - 0 - reset to first slide
-		//
-		if (keyCode === 37 || keyCode === 33) {
-			svgp.previousSlide();
-		} else if (keyCode === 39 || keyCode === 34) {
-			svgp.nextSlide();
-		} else if (keyCode === 70 ) {
-			svgp.toggleFullscreenMode();
-		} else if (keyCode === 78 || keyCode === 190 ) {
-			svgp.toggleNotes();
-		} else if (keyCode === 48 ){
-			svgp.globals.slideIdx = 0;
-			svgp.showSlide(svgp.globals.slideIdx);
-			svgp.updateHistory();
+		if (e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented) {
+			return;
+		}
+		var action = keyActions[e.key.length === 1 ? e.key.toLowerCase() : e.key];
+		if (action) {
+			e.preventDefault();
+			action();
 		}
 	};
-	
+
 	svgp.updateHistory = function(){
 		// modify browser history, so you can bookmark en link to specific slides
 		if(top.setUrlState){
 			top.setUrlState(
 				  svgp.globals.slideIdx
-				, svgp.globals.title + " - " + svgp.globals.slideIdx 
+				, svgp.globals.title + " - " + svgp.globals.slideIdx
 				+ " - " + svgp.globals.slides[svgp.globals.slideIdx].title
 			);
 		}
@@ -253,110 +269,125 @@
 	// Toggle display of notes
 	svgp.toggleNotes = function(){
 		console.log("toggleNotes");
-		top.toggleNotesMode();
+		if (top.toggleNotesMode) {
+			top.toggleNotesMode();
+		}
 	};
 
-	// Toggle fullscreen mode for presentation, this is currently only
-	// supported in chrome
+	// Toggle fullscreen. Inside an html page the whole page goes fullscreen,
+	// so the notes stay available; on its own the svg does.
 	svgp.toggleFullscreenMode = function(){
 		console.log('toggleFullScreenMode');
-		var svgElem = document.getElementsByTagName('svg')[0];
-		if ( svgElem.webkitRequestFullScreen ) {
-			// TODO: this crashes chrome
-			svgElem.webkitRequestFullScreen();
-		}
-	};
-
-	svgp.mouseclicked = function(evt) {
-		console.log('mouseclicked: ' + evt);
-		if (evt.touches){
-			return;
-		}
-		// check if we're drawing instead of clicking next/previous
-		if( svgp.globals.drawingPoints.length > 2){
-			return;
-		}
-		var svgElem = document.getElementsByTagName('svg')[0];
-		if (evt.clientX < (svgElem.width.baseVal.value / 2)) {
-			svgp.previousSlide();
-		} else {
-			svgp.nextSlide();
-		}
-	};
-	svgp.mousemove = function(evt){
-		//console.log("mousemove: " + evt.pageX + ", " + evt.pageY);
-		svgp.penMove(evt.pageX,evt.pageY);
-	};
-	svgp.ontouchmove = function(evt) {
-		console.log('ontouchmove: ' + evt + ', ' + evt.touches.length + ', ' + evt.changedTouches.length);
-		svgp.penMove(evt.touches[0].pageX,evt.touches[0].pageX);
-	};
-	svgp.penMove = function(penX,penY){
-		if (Math.abs(svgp.globals.touchPrevX - penX) < 3 && Math.abs(svgp.globals.touchPrevY - penY) < 3) {
-			return;
-		}
-		svgp.globals.touchPrevX = penX;
-		svgp.globals.touchPrevY = penY;
-		svgp.globals.points[svgp.globals.points.length] = new Point(penX,penY);
-		
-		// show 
-		if(svgp.globals.isDrawing){
-			var p = svgp.penToSvg(penX,penY);
-			svgp.globals.drawingPoints[svgp.globals.drawingPoints.length] = p;
-
-			var path = Sizzle("path[id=path-" + svgp.globals.pathId + "]");
-			if( path.length == 0){
-				// start new drawing path
-				var path = document.createElementNS("http://www.w3.org/2000/svg","path");
-				path.setAttribute("id", "path-" + svgp.globals.pathId);
-				path.setAttribute("stroke-width","3");
-				path.setAttribute("stroke","red");
-				path.setAttribute("style","fill: transparent; opacity:0.3;");
-				path.setAttribute("d","M " + p.X + " " + p.Y );
-			} else {
-				path = path[0];
-				path.setAttribute("d", path.getAttribute("d") + " S " + p.X + " " + p.Y + " " + (parseInt(p.X) + 2) + " " + (parseInt(p.Y) + 2)   )
+		var doc = document;
+		try {
+			if (window.frameElement) {
+				doc = window.frameElement.ownerDocument;
 			}
-
-			var lastG = Sizzle("g[id=drawing-" + svgp.globals.slideIdx + "]")[0];
-			lastG.appendChild(path);					
+		} catch (e) {
+			// the embedding page is on another origin
 		}
-	}
-	svgp.ontouchstart = function(evt) {
-		evt.preventDefault();
-		console.log('ontouchstart: ' + evt + ', ' + evt.touches.length + ', ' + evt.changedTouches.length);
-		svgp.penDown(evt.touches[0].pageX,evt.touches[0].pageX);
-		// svgp.globals.points = [];
-		// var touch = evt.touches[0];
-		// svgp.globals.touchPrevX = touch.pageX;
-		// svgp.globals.touchPrevY = touch.pageY;
+		var el = doc.documentElement;
+		var done = function(p) { if (p && p.catch) { p.catch(function() {}); } };
+		if (doc.fullscreenElement || doc.webkitFullscreenElement) {
+			done(doc.exitFullscreen ? doc.exitFullscreen() : doc.webkitExitFullscreen());
+		} else if (el.requestFullscreen) {
+			done(el.requestFullscreen());
+		} else if (el.webkitRequestFullscreen) {
+			el.webkitRequestFullscreen();
+		}
+	};
 
-		// var p = new Point(touch.pageX,touch.pageY);
-		// svgp.globals.drawingPoints = [];
-		// svgp.globals.drawingPoints[0] = p;
-		// svgp.globals.isDrawing = true;
-	};
-	svgp.mousedown = function(evt){
-		console.log("mousedown: " + evt.pageX + ", " + evt.pageY);
-		svgp.penDown(evt.pageX,evt.pageY);
-		// var p = new Point(evt.pageX,evt.pageY);
-		// svgp.globals.drawingPoints = [];
-		// svgp.globals.drawingPoints[0] = p;
-		// svgp.globals.isDrawing = true;
-	};
-	svgp.penDown = function(penX,penY){
-		var p = new Point(penX,penY);
-		svgp.globals.drawingPoints = [];
-		svgp.globals.drawingPoints[0] = p;
-		svgp.globals.isDrawing = true;		
+	/*---------------- pointer input: tap to navigate, drag to draw ----------------*/
+
+	// how far a pointer may move, in pixels, and still count as a tap
+	var TAP_SLOP = 8;
+	var stroke = null;
+
+	// smooth path through the points: quadratic curves between midpoints
+	function strokePath(points) {
+		var r = function(v) { return Math.round(v * 10) / 10; };
+		var d = 'M' + r(points[0].X) + ' ' + r(points[0].Y);
+		for (var i = 1; i < points.length - 1; i++) {
+			var p = points[i], q = points[i + 1];
+			d += 'Q' + r(p.X) + ' ' + r(p.Y) + ' ' + r((p.X + q.X) / 2) + ' ' + r((p.Y + q.Y) / 2);
+		}
+		var last = points[points.length - 1];
+		return d + 'L' + r(last.X) + ' ' + r(last.Y);
 	}
-	svgp.ontouchend = function(evt) {
-		console.log('ontouchend: ' + evt + ', ' + evt.touches.length + ', ' 
-			+ evt.changedTouches.length + ", " + svgp.globals.points.length + ", " 
-			+ svgp.recognizer.Recognize(svgp.globals.points));
-		svgp.penUp(evt.touches[0].pageX,evt.touches[0].pageX);
+
+	svgp.pointerdown = function(evt) {
+		if (!evt.isPrimary || evt.button > 0) {
+			return;
+		}
+		svgRoot().setPointerCapture(evt.pointerId);
+		stroke = {
+			id: evt.pointerId,
+			x0: evt.clientX, y0: evt.clientY,
+			lastX: evt.clientX, lastY: evt.clientY,
+			points: [svgp.penToSvg(evt.clientX, evt.clientY)],
+			path: null
+		};
+	};
+
+	svgp.pointermove = function(evt) {
+		if (!stroke || evt.pointerId !== stroke.id) {
+			return;
+		}
+		var events = evt.getCoalescedEvents ? evt.getCoalescedEvents() : [];
+		if (!events.length) {
+			events = [evt];
+		}
+		for (var i = 0; i < events.length; i++) {
+			var e = events[i];
+			if (Math.abs(stroke.lastX - e.clientX) < 3 && Math.abs(stroke.lastY - e.clientY) < 3) {
+				continue;
+			}
+			stroke.lastX = e.clientX;
+			stroke.lastY = e.clientY;
+			stroke.points.push(svgp.penToSvg(e.clientX, e.clientY));
+		}
+		if (!stroke.path && Math.hypot(evt.clientX - stroke.x0, evt.clientY - stroke.y0) > TAP_SLOP) {
+			stroke.path = document.createElementNS(svgNS, 'path');
+			stroke.path.setAttribute('id', 'path-' + svgp.globals.pathId++);
+			stroke.path.setAttribute('stroke-width', '3');
+			stroke.path.setAttribute('stroke', 'red');
+			stroke.path.setAttribute('stroke-linecap', 'round');
+			stroke.path.setAttribute('stroke-linejoin', 'round');
+			stroke.path.setAttribute('vector-effect', 'non-scaling-stroke');
+			stroke.path.setAttribute('style', 'fill: none; opacity:0.3;');
+			document.getElementById('drawing-' + svgp.globals.slideIdx).appendChild(stroke.path);
+		}
+		if (stroke.path) {
+			stroke.path.setAttribute('d', strokePath(stroke.points));
+		}
+	};
+
+	svgp.pointerup = function(evt) {
+		if (!stroke || evt.pointerId !== stroke.id) {
+			return;
+		}
+		var s = stroke;
+		stroke = null;
+		if (!s.path) {
+			// a tap: left half goes back, right half goes forward
+			var box = svgRoot().getBoundingClientRect();
+			if (evt.clientX < box.left + box.width / 2) {
+				svgp.previousSlide();
+			} else {
+				svgp.nextSlide();
+			}
+			return;
+		}
+		svgp.globals.drawingPoints = s.points;
 		svgp.handleGesture();
-	}
+	};
+
+	svgp.pointercancel = function(evt) {
+		if (stroke && evt.pointerId === stroke.id) {
+			stroke = null;
+		}
+	};
+
 	svgp.handleGesture = function(){
 		console.log("handleGesture");
 		if (svgp.globals.drawingPoints.length >= 10) {
@@ -369,53 +400,21 @@
 			} else if (result.Name == "zig-zag") {
 				svgp.toggleNotes();
 			} else if (result.Name == "circle") {
-				svgp.globals.slideIdx = 0;
-				svgp.showSlide(svgp.globals.slideIdx);
-				svgp.updateHistory();
+				svgp.goToSlide(0);
 			}
 		}
 	};
-	svgp.mouseup = function(evt){
-		console.log("mouseup: " + evt.pageX + ", " + evt.pageY);
-		svgp.penUp(evt.pageX,evt.pageY);
-		svgp.handleGesture();
-		// var p = new Point(evt.pageX,evt.pageY);
-		// svgp.globals.drawingPoints[svgp.globals.drawingPoints.length] = p;
-		// svgp.globals.isDrawing = false;
-		// console.log("#points: " + svgp.globals.drawingPoints.length);
-		// if(svgp.globals.drawingPoints.length > 2){
-		// 	console.log("stopping propagation");
-		// 	evt.stopPropagation();
-		// 	svgp.globals.pathId = parseInt(svgp.globals.pathId) + 1;
-		// }
-	};
-	svgp.penUp = function(penX,penY){
-		var p = new Point(penX,penY);
-		svgp.globals.drawingPoints[svgp.globals.drawingPoints.length] = p;
-		svgp.globals.isDrawing = false;
-		console.log("#points: " + svgp.globals.drawingPoints.length);
-		// if(svgp.globals.drawingPoints.length > 2){
-		// 	console.log("stopping propagation");
-		// 	evt.stopPropagation();
-		// }
-		svgp.globals.pathId = parseInt(svgp.globals.pathId) + 1;
-	}
 
-	// translate mouse pixel coordinates to svg drawing coordinates
-	svgp.penToSvg = function(penX,penY){
-		var svg = Sizzle("svg")[0];
+	// translate pointer (client) coordinates to svg drawing coordinates
+	svgp.penToSvg = function(clientX, clientY){
+		var svg = svgRoot();
 		var svgPoint = svg.createSVGPoint();
-		svgPoint.x = penX;
-		svgPoint.y = penY;
-		var matrix = svg.getScreenCTM();
-		svgPoint = svgPoint.matrixTransform(matrix.inverse());
-		if(top.setTitleAndNotes){
-			top.setTitleAndNotes("page: ", penX + "," + penY
-				+ " svg point: " + svgPoint.x + ", "+ svgPoint.y
-				,1,1);
-		}    	
-    	return new Point(svgPoint.x,svgPoint.y);
-    };
+		svgPoint.x = clientX;
+		svgPoint.y = clientY;
+		svgPoint = svgPoint.matrixTransform(svg.getScreenCTM().inverse());
+		return new Point(svgPoint.x, svgPoint.y);
+	};
+
 	svgp.init = function(_slides,_title) {
 		console.log('init:' + _title	);
 
@@ -424,32 +423,35 @@
 		svgp.initGroupNames();
 		svgp.globals.slideCount = svgp.globals.slides.length;
 		console.log("Number of slides in deck: " + svgp.globals.slideCount);
-		// entire svg drawing should fit inside viewport
-		// gets the width and height of the original image, used to specify
-        // that all of the image should be inside the viewport
-		var svgElem = document.getElementsByTagName('svg')[0];
-		console.log('setting viewbox, using width: ' 
-			+ svgElem.width.animVal.value + ' and height: ' + svgElem.height.animVal.value );
-		svgElem.setAttribute("preserveAspectRatio","xMinYMin meet");
-		//svgElem.setAttribute('viewBox','0 0 ' + svgElem.width.animVal.value + ' ' + svgElem.height.animVal.value );
-		svgp.globals.lastViewbox = '0 0 ' + svgElem.width.animVal.value + ' ' + svgElem.height.animVal.value;
-		svgElem.setAttribute("width","1500px");
 
-		svgElem.addEventListener('keydown', function(evt) {svgPresenter.keypressed(evt);});
-		if ('ontouchstart' in window ){
-			console.log("enabling touch event handlers");
-			svgElem.addEventListener('touchend', function(evt) {svgPresenter.ontouchend(evt);});
-			svgElem.addEventListener('touchstart', function(evt) {svgPresenter.ontouchstart(evt);});
-			svgElem.addEventListener('touchmove', function(evt) {svgPresenter.ontouchmove(evt);});
+		// Start from the whole drawing. From here on the viewBox is the
+		// camera, and the svg fills the window (or the <object> holding it):
+		// preserveAspectRatio keeps the view fitted whenever that resizes.
+		var svgElem = svgRoot();
+		var viewBox = svgElem.viewBox.baseVal;
+		if (viewBox && viewBox.width) {
+			svgp.setCamera({ x: viewBox.x, y: viewBox.y, w: viewBox.width, h: viewBox.height });
 		} else {
-			console.log("enabling mouse click event handlers");
-			svgElem.addEventListener('click', function(evt) {svgPresenter.mouseclicked(evt);},true);
-			svgElem.addEventListener('mousedown', function(evt){svgPresenter.mousedown(evt);},true);
-			svgElem.addEventListener('mouseup', function(evt){svgPresenter.mouseup(evt);},true);
-			svgElem.addEventListener('mousemove', function(evt){svgPresenter.mousemove(evt);},true);
+			svgp.setCamera({ x: 0, y: 0, w: svgElem.width.baseVal.value, h: svgElem.height.baseVal.value });
 		}
+		svgElem.setAttribute('width', '100%');
+		svgElem.setAttribute('height', '100%');
+		svgElem.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+		svgElem.style.touchAction = 'none';
+		svgElem.style.userSelect = 'none';
+		svgElem.style.webkitUserSelect = 'none';
+
+		window.addEventListener('keydown', svgp.keypressed);
+		svgElem.addEventListener('pointerdown', svgp.pointerdown);
+		svgElem.addEventListener('pointermove', svgp.pointermove);
+		svgElem.addEventListener('pointerup', svgp.pointerup);
+		svgElem.addEventListener('pointercancel', svgp.pointercancel);
+
 		if(top.getUrlSlideIdx){
-			svgp.globals.slideIdx = top.getUrlSlideIdx();
+			var urlIdx = top.getUrlSlideIdx();
+			if (urlIdx >= 0 && urlIdx < svgp.globals.slideCount) {
+				svgp.globals.slideIdx = urlIdx;
+			}
 		}
 		svgp.showSlide(svgp.globals.slideIdx);
 		if (svgElem.focus){
@@ -460,4 +462,3 @@
 		}
 	};
 })();
-
