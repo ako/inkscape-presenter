@@ -12,7 +12,7 @@ presentation to sketch, says "done" / "updated" about a sketch deck, or asks
 for a change to how the Sketch Deck page itself works.
 
 It needs claude.ai artifacts: the `Artifact` and `ArtifactData` tools, and
-pages with the `db` and `assets` capabilities. The scripts need Python 3 with
+pages with the `db`, `assets` and `downloads` capabilities. The scripts need Python 3 with
 Playwright and Chromium (`pip install playwright`, then
 `playwright install chromium` if missing).
 
@@ -47,6 +47,16 @@ Playwright and Chromium (`pip install playwright`, then
   so moving or re-flowing slides needs no redraw. The Sketch / Both / Clean
   toggle appears once there is content. Present (Enter) hides notes, images
   and frame outlines.
+- Download (toolbar) saves what Present shows in the current Sketch / Both /
+  Clean view, as a standalone presentation (`.html`: one file with the
+  slides, build steps, keyboard, tap and swipe navigation, fullscreen, and a
+  slide navigator (S) to hide, show and reorder slides for an audience,
+  remembered per file in that browser, with "Save copy" writing a new file
+  with that arrangement built in) or as
+  a drawing for Inkscape (`.svg`: each slide a layer `slide N` with build
+  steps as sublayers `step N`, plus hidden `frames` and `notes` layers). The
+  `.svg` follows the inkscape-presenter layer conventions. Saving goes
+  through the `downloads` capability; the viewer confirms each file.
 
 ## Bundled files
 
@@ -66,8 +76,9 @@ scripts import `slide_kit`.
 1. Copy `template/sketch-deck.html` to `<deck-slug>.html` in the working
    directory, and set its `<title>` to the talk's name (2-4 words).
 2. Publish it as a NEW artifact: that `file_path`,
-   `capabilities: {"db": {}, "assets": {}}`, `icon: "pencil"`, a one-line
-   `description`. Each deck gets its own empty database and image storage.
+   `capabilities: {"db": {}, "assets": {}, "downloads": true}`,
+   `icon: "pencil"`, a one-line `description`. Each deck gets its own empty
+   database and image storage.
 3. Check the database with one `ArtifactData` `list` of `frames` (expect
    empty).
 4. Reply in a few lines: it's ready, the key tools, and "say done or
@@ -154,7 +165,11 @@ next "updated" can start from it.
    loops.
 2. Publish to the deck's own artifact: the same `file_path` in the same
    conversation, or its `url` from another one (read it first and build on
-   the saved file). Omit `capabilities` so db and assets stay declared.
+   the saved file). Omit `capabilities` so db, assets and downloads stay
+   declared. A deck made before the Download menu existed lacks
+   `downloads`: when you update such a deck to the current page, pass
+   `capabilities: {"db": {}, "assets": {}, "downloads": true}` once (the
+   full set, since a non-empty object replaces what is declared).
 3. Reply with one line per slide (mention its build steps), then
    placeholders to confirm, empty frames, and anything outside frames. No
    recap of steps.
