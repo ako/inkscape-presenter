@@ -51,6 +51,8 @@ This repository also distributes Sketch Deck, a Claude skill that grew out of
 this presenter. You sketch slides by hand on a zoomable canvas (pen, typed
 notes and reference images), and Claude reads the sketch and draws the
 finished slides into the same page, with build steps and a presenting mode.
+The finished deck downloads as a standalone HTML presentation, or as an SVG
+with one Inkscape layer per slide and sublayers for its build steps.
 
 It runs on claude.ai artifacts: the canvas saves to the artifact's database,
 so it needs Claude with the Artifact tools. The helper scripts need Python 3

@@ -121,6 +121,8 @@ body.present .stroke.note,body.present .tnote.note,body.present #images,body.pre
 #bPresent kbd{color:#5a4200}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
 .seg button{border-radius:0;padding:7px 9px}
+#dlMenu{right:16px;top:calc(76px + env(safe-area-inset-top,0px));z-index:6;flex-direction:column;align-items:stretch}
+#dlMenu button{justify-content:space-between;gap:16px}
 #status{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:5;font:12px var(--f-mono);color:var(--dim);background:var(--bar);border:1px solid var(--line);border-radius:999px;padding:6px 11px}
 #status.warn{color:#f3b49a}
 
@@ -188,9 +190,14 @@ body.present .stroke.note,body.present .tnote.note,body.present #images,body.pre
   <span class="sep"></span>
   <button id="bSlides" aria-pressed="false" title="Slides: insert, delete, reorder (S)"><span class="lbl">Slides</span><kbd>S</kbd></button>
   <button id="bSteps" aria-pressed="false" title="Build steps of the current slide (L)"><span class="lbl">Steps</span><kbd>L</kbd></button>
+  <button id="bDownload" aria-haspopup="true" aria-expanded="false" title="Download the presentation or the drawing"><span>↓</span><span class="lbl">Download</span></button>
   <button id="bPresent" title="Present the frames (Enter)">▶ <span class="lbl">Present</span></button>
 </div>
 <div id="status">Connecting…</div>
+<div id="dlMenu" class="bar" hidden role="menu" aria-label="Download">
+  <button id="bDlHtml" role="menuitem" title="One HTML file that presents the slides with their build steps">Presentation <kbd>.html</kbd></button>
+  <button id="bDlSvg" role="menuitem" title="The drawing with each slide as an Inkscape layer and build steps as sublayers">Drawing for Inkscape <kbd>.svg</kbd></button>
+</div>
 <div id="selbar" class="bar" hidden role="toolbar" aria-label="Selection">
   <span class="count" id="selCount"></span>
   <button id="bEditText" title="Edit this text (double-click)">Edit text</button>
@@ -212,6 +219,7 @@ body.present .stroke.note,body.present .tnote.note,body.present #images,body.pre
     <li><b>Select</b> (V) to move, resize, delete or duplicate. Moving a frame takes its content along.</li>
     <li><b>Slides</b> (S) to insert, delete and reorder slides; the grid re-flows and renumbers. <b>Steps</b> (L) to order what appears when on a slide.</li>
     <li>When you're done, tell Claude in the chat to turn the sketch into visuals.</li>
+    <li><b>Download</b> saves the slides as a standalone presentation (.html), or as layers for Inkscape (.svg).</li>
   </ol>
   <div class="row"><button id="bHint">Got it</button></div>
 </aside>
@@ -1453,6 +1461,254 @@ function setView(v){
   document.querySelectorAll('#viewSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === v));
 }
 if (cleanG.children.length){ $('viewSeg').hidden = false; setView('clean'); } else setView('sketch');
+
+/* ---------------- download: standalone presentation (.html), drawing for Inkscape (.svg) ---------------- */
+// Both exports show what Present shows in the current Sketch / Both / Clean
+// view: each slide is an Inkscape layer "slide N" whose build steps are
+// sublayers "step N"; frames and notes go into hidden layers.
+const INK_NS = 'http://www.inkscape.org/namespaces/inkscape';
+const SODI_NS = 'http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd';
+const FONTS_URL = (document.querySelector('link[href*="fonts.googleapis.com/css2"]') || {}).href || '';
+const EXPORT_CSS = '.d{font-family:"Unbounded","Arial Black",sans-serif;font-weight:700;fill:#1b2a33}'
+  + '.d5{font-family:"Unbounded","Arial Black",sans-serif;font-weight:500;fill:#1b2a33}'
+  + '.b{font-family:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;fill:#1b2a33}'
+  + '.m{font-family:"IBM Plex Mono",Menlo,Consolas,monospace;fill:#6f7d86;white-space:pre}';
+const BODY_FONT = '"IBM Plex Sans","Helvetica Neue",Arial,sans-serif';
+let downloads = null;
+
+function exLayer(label, hidden){
+  const g = document.createElementNS(NS, 'g');
+  g.setAttributeNS(INK_NS, 'inkscape:groupmode', 'layer');
+  g.setAttributeNS(INK_NS, 'inkscape:label', label);
+  if (hidden) g.setAttribute('style', 'display:none');
+  return g;
+}
+function exTitle(g, text){ if (!text) return; const t = document.createElementNS(NS, 'title'); t.textContent = text; g.prepend(t); }
+// a clone without the editor's state: selection, step preview, ids used by the page
+function exTidy(el){
+  [el, ...el.querySelectorAll('*')].forEach(n => {
+    if (n.classList){ n.classList.remove('step-hidden', 'step-peek', 'selected', 'editing'); if (!n.classList.length) n.removeAttribute('class'); }
+    n.removeAttribute('data-id'); n.removeAttribute('data-sd-x');
+  });
+  return el;
+}
+// transform from an element's coordinates to world coordinates
+function worldMatrix(el){
+  let m = svg.createSVGMatrix();
+  for (let n = el; n && n !== camG; n = n.parentNode){
+    const t = n.transform && n.transform.baseVal.consolidate();
+    if (t) m = t.matrix.multiply(m);
+  }
+  return m;
+}
+// a sketch item as plain svg, with the page's css turned into attributes
+function sketchClone(col, it, opacity){
+  const note = it.c === 'note';
+  const c = it.el.cloneNode(true);
+  c.removeAttribute('class'); c.removeAttribute('transform'); c.removeAttribute('data-id');
+  if (col === 'strokes'){
+    c.setAttribute('fill', 'none'); c.setAttribute('stroke', note ? '#e2541b' : '#1b2a33');
+    c.setAttribute('stroke-linecap', 'round'); c.setAttribute('stroke-linejoin', 'round');
+  } else {
+    const r = c.querySelector('rect'), t = c.querySelector('text');
+    if (note){ r.setAttribute('fill', '#fff3e8'); r.setAttribute('stroke', '#e2541b'); r.setAttribute('stroke-width', r1(it.fs * 0.06)); }
+    else r.remove();
+    t.setAttribute('fill', note ? '#8a2d0c' : '#1b2a33'); t.setAttribute('font-family', BODY_FONT);
+    if (!note) t.setAttribute('font-weight', '500');
+  }
+  if (opacity < 1) c.setAttribute('opacity', opacity);
+  return c;
+}
+function buildExportSvg(){
+  const view = document.body.dataset.view || 'sketch';
+  const showClean = view !== 'sketch', showSketch = view !== 'clean', fade = view === 'both' ? 0.28 : 1;
+  const list = frameList();
+  const b = contentBox() || { x: SHEET.x, y: SHEET.y, w: SHEET.w, h: SHEET.h };
+  const pad = Math.max(b.w, b.h) * 0.03, vb = { x: r1(b.x - pad), y: r1(b.y - pad), w: r1(b.w + 2 * pad), h: r1(b.h + 2 * pad) };
+  const out = document.createElementNS(NS, 'svg');
+  out.setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:inkscape', INK_NS);
+  out.setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:sodipodi', SODI_NS);
+  out.setAttribute('width', vb.w); out.setAttribute('height', vb.h);
+  out.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+  exTitle(out, document.title);
+  const style = document.createElementNS(NS, 'style');
+  style.textContent = (FONTS_URL ? `@import url("${FONTS_URL}");` : '') + EXPORT_CSS;
+  out.append(style);
+  cleanG.querySelectorAll(':scope > defs').forEach(d => out.append(d.cloneNode(true)));
+
+  const bg = exLayer('background');
+  bg.setAttributeNS(SODI_NS, 'sodipodi:insensitive', 'true');
+  const paper = document.createElementNS(NS, 'rect');
+  ['x', 'y', 'width', 'height'].forEach((a, i) => paper.setAttribute(a, [vb.x, vb.y, vb.w, vb.h][i]));
+  paper.setAttribute('fill', '#eceee9'); bg.append(paper); out.append(bg);
+
+  list.forEach((f, i) => {
+    const L = exLayer(`slide ${i + 1}`);
+    L.setAttribute('id', `slide-${i + 1}`);
+    L.setAttribute('data-sd-slide', i + 1);
+    L.setAttribute('data-sd-frame', [f.x, f.y, f.w, f.h].map(r1).join(' '));
+    exTitle(L, slideTitle(f.id));
+    const steps = activeSteps(f.id), stepOf = new Map();
+    steps.forEach((st, j) => st.els.forEach(el => el && stepOf.set(el, j)));
+    const stepLayers = steps.map(() => exLayer(''));
+    const cg = cleanGroupOf(f.id);
+    if (showClean && cg && cg.style.display !== 'none'){
+      const stepEls = [...cg.querySelectorAll('[data-step]')].filter(el => stepOf.has(el));
+      stepEls.forEach(el => el.setAttribute('data-sd-x', ''));
+      const base = cg.cloneNode(true);
+      base.querySelectorAll('[data-sd-x]').forEach(el => el.remove());
+      L.append(exTidy(base));
+      stepEls.forEach(el => {
+        const m = worldMatrix(el.parentNode), wrap = document.createElementNS(NS, 'g');
+        wrap.setAttribute('transform', `matrix(${[m.a, m.b, m.c, m.d, m.e, m.f].map(v => +v.toFixed(5)).join(' ')})`);
+        wrap.append(exTidy(el.cloneNode(true)));
+        stepLayers[stepOf.get(el)].append(wrap);
+        el.removeAttribute('data-sd-x');
+      });
+    }
+    if (showSketch) itemsIn(f.id).forEach(({ col, it }) => {
+      if (col === 'images' || it.c === 'note') return;
+      const j = stepOf.get(it.el);
+      (j == null ? L : stepLayers[j]).append(sketchClone(col, it, fade));
+    });
+    // steps left empty in this view are dropped, the rest renumbered
+    stepLayers.filter(g => g.children.length).forEach((g, k) => {
+      const name = steps[stepLayers.indexOf(g)].name;
+      g.setAttributeNS(INK_NS, 'inkscape:label', `step ${k + 1}` + (name && !/^Step \d+$/.test(name) ? ` · ${name}` : ''));
+      g.setAttribute('data-sd-step', k);
+      L.append(g);
+    });
+    out.append(L);
+  });
+
+  const outside = exLayer('outside frames'), notes = exLayer('notes', true);
+  [['strokes', strokes], ['texts', texts]].forEach(([col, m]) => m.forEach(it => {
+    if (it.c === 'note') notes.append(sketchClone(col, it, 1));
+    else if (showSketch && !ownerFrame(...anchor[col](it))) outside.append(sketchClone(col, it, fade));
+  }));
+  if (outside.children.length) out.append(outside);
+  const fl = exLayer('frames', true);
+  list.forEach((f, i) => {
+    const r = document.createElementNS(NS, 'rect');
+    r.setAttribute('id', `frame-${i + 1}`);
+    ['x', 'y', 'width', 'height'].forEach((a, k) => r.setAttribute(a, r1([f.x, f.y, f.w, f.h][k])));
+    r.setAttribute('fill', 'none'); r.setAttribute('stroke', '#e0a106'); r.setAttribute('stroke-width', r1(f.w * 0.002)); r.setAttribute('stroke-dasharray', `${r1(f.w * 0.006)} ${r1(f.w * 0.004)}`);
+    fl.append(r);
+  });
+  out.append(fl);
+  if (notes.children.length) out.append(notes);
+  return out;
+}
+
+// the player in the downloaded presentation: slides are the "slide N"
+// layers, their "step N" sublayers appear one at a time
+const PLAYER_JS = `(function(){
+var svg=document.getElementById('deck'),hud=document.getElementById('hud');
+var slides=[].slice.call(svg.querySelectorAll('[data-sd-slide]')).map(function(g){
+  var f=g.getAttribute('data-sd-frame').split(' ').map(Number);
+  var steps=[].slice.call(g.querySelectorAll('[data-sd-step]')).sort(function(a,b){return a.getAttribute('data-sd-step')-b.getAttribute('data-sd-step');});
+  return {x:f[0],y:f[1],w:f[2],h:f[3],steps:steps};
+});
+var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+var cam=null,raf=0,slide=0,step=0,hudTimer=0;
+function setCam(c){cam=c;svg.setAttribute('viewBox',[c.x,c.y,c.w,c.h].join(' '));}
+function frameView(f){var w=f.w/0.98,h=f.h/0.98;return{x:f.x+f.w/2-w/2,y:f.y+f.h/2-h/2,w:w,h:h};}
+function zoom(p0,p1){var rho=Math.SQRT2,ux0=p0[0],uy0=p0[1],w0=p0[2],ux1=p1[0],uy1=p1[1],w1=p1[2],dx=ux1-ux0,dy=uy1-uy0,d2=dx*dx+dy*dy,S,i;
+  if(d2<1e-12){S=Math.log(w1/w0)/rho;i=function(t){return[ux0+t*dx,uy0+t*dy,w0*Math.exp(rho*t*S)];};}
+  else{var d1=Math.sqrt(d2),b0=(w1*w1-w0*w0+4*d2)/(2*w0*2*d1),b1=(w1*w1-w0*w0-4*d2)/(2*w1*2*d1),r0=Math.log(Math.sqrt(b0*b0+1)-b0),r1=Math.log(Math.sqrt(b1*b1+1)-b1);S=(r1-r0)/rho;
+    i=function(t){var s=t*S,c0=Math.cosh(r0),u=w0/(2*d1)*(c0*Math.tanh(rho*s+r0)-Math.sinh(r0));return[ux0+u*dx,uy0+u*dy,w0*c0/Math.cosh(rho*s+r0)];};}
+  i.duration=Math.abs(S)*1000;return i;}
+function ease(t){return t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
+function fly(t,instant){cancelAnimationFrame(raf);var f=cam;if(!f||instant||reduce){setCam(t);return;}
+  var z=zoom([f.x+f.w/2,f.y+f.h/2,f.w],[t.x+t.w/2,t.y+t.h/2,t.w]),a0=f.h/f.w,a1=t.h/t.w,dur=Math.min(2000,Math.max(550,z.duration*0.85)),t0=performance.now();
+  function frame(now){var k=Math.min(1,(now-t0)/dur);if(k===1){setCam(t);return;}var e=ease(k),v=z(e),w=v[2],h=w*(a0+(a1-a0)*e);setCam({x:v[0]-w/2,y:v[1]-h/2,w:w,h:h});raf=requestAnimationFrame(frame);}
+  raf=requestAnimationFrame(frame);}
+function showHud(){hud.style.opacity=1;clearTimeout(hudTimer);hudTimer=setTimeout(function(){hud.style.opacity=0;},2500);}
+function apply(){slides.forEach(function(s,i){s.steps.forEach(function(g,j){g.classList.toggle('sd-hidden',i>slide||(i===slide&&j>=step));});});
+  var n=slides[slide].steps.length;hud.textContent=(slide+1)+' / '+slides.length+(n?' \\u00b7 '+step+'/'+n:'');showHud();
+  try{history.replaceState(null,'','#'+(slide+1));}catch(e){}}
+function go(i,atEnd,instant){slide=Math.max(0,Math.min(slides.length-1,i));step=atEnd?slides[slide].steps.length:0;apply();fly(frameView(slides[slide]),instant);}
+function next(){if(step<slides[slide].steps.length){step++;apply();}else if(slide<slides.length-1)go(slide+1);}
+function prev(){if(step>0){step--;apply();}else if(slide>0)go(slide-1,true);}
+function fullscreen(){var d=document;if(d.fullscreenElement){d.exitFullscreen&&d.exitFullscreen();}else{var el=d.documentElement,p=el.requestFullscreen?el.requestFullscreen():el.webkitRequestFullscreen&&el.webkitRequestFullscreen();if(p&&p.catch)p.catch(function(){});}}
+if(!slides.length){hud.textContent='No slides';return;}
+var keys={ArrowRight:next,ArrowDown:next,PageDown:next,' ':next,Enter:next,ArrowLeft:prev,ArrowUp:prev,PageUp:prev,Backspace:prev,
+  Home:function(){go(0);},End:function(){go(slides.length-1,true);},f:fullscreen,F:fullscreen};
+addEventListener('keydown',function(e){if(e.ctrlKey||e.metaKey||e.altKey)return;var k=keys[e.key];if(k){e.preventDefault();k();}});
+var down=null;
+svg.addEventListener('pointerdown',function(e){if(e.isPrimary)down={x:e.clientX,y:e.clientY};});
+svg.addEventListener('pointerup',function(e){if(!down)return;var dx=e.clientX-down.x,dy=e.clientY-down.y;down=null;
+  if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)){(dx<0?next:prev)();}
+  else if(Math.abs(dx)<8&&Math.abs(dy)<8){(e.clientX<innerWidth/2?prev:next)();}});
+addEventListener('mousemove',showHud);
+var start=parseInt((location.hash||'').slice(1),10);
+go(start>0?start-1:0,false,true);
+})();`;
+
+function buildExportHtml(){
+  const svgEl = buildExportSvg();
+  svgEl.setAttribute('id', 'deck');
+  svgEl.removeAttribute('width'); svgEl.removeAttribute('height');
+  svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  return '<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'
+    + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+    + `<title>${esc(document.title)}</title>`
+    + (FONTS_URL ? `<link rel="stylesheet" href="${esc(FONTS_URL)}">` : '')
+    + '<style>html,body{margin:0;height:100%;overflow:hidden;background:#181c20}'
+    + '#deck{display:block;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none}'
+    + '[data-sd-step]{transition:opacity .45s ease}.sd-hidden{opacity:0!important;pointer-events:none}'
+    + '@media (prefers-reduced-motion:reduce){[data-sd-step]{transition:none}}'
+    + '#hud{position:fixed;right:16px;bottom:16px;font:13px "IBM Plex Mono",Menlo,monospace;color:#e0a106;background:rgba(22,26,30,.9);'
+    + 'border:1px solid rgba(236,238,233,.14);border-radius:999px;padding:6px 11px;transition:opacity .4s;pointer-events:none}</style>'
+    + '</head><body>\n' + new XMLSerializer().serializeToString(svgEl)
+    + '\n<div id="hud" aria-live="polite"></div>\n<script>' + PLAYER_JS + '<' + '/script>\n</body></html>\n';
+}
+
+function exportName(ext){
+  const slug = (document.title || '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return (slug || 'sketch-deck') + '.' + ext;
+}
+let noteTimer = 0;
+function flashStatus(msg){ const el = $('status'); el.textContent = msg; clearTimeout(noteTimer); noteTimer = setTimeout(setStatus, 3500); }
+async function saveFile(filename, text, type){
+  if (downloads){
+    try { await downloads.save({ filename, data: text }); flashStatus('Downloaded ' + filename); }
+    catch (e){ if (!e || e.code !== 'declined') flashStatus('Download failed: ' + ((e && e.message) || 'try again')); }
+    return;
+  }
+  // a copy of the page opened outside claude.ai: an ordinary browser download
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type })); a.download = filename;
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  flashStatus('Downloaded ' + filename);
+}
+function toggleDlMenu(open){
+  const m = $('dlMenu'); open = open == null ? m.hidden : open;
+  m.hidden = !open; $('bDownload').setAttribute('aria-expanded', open);
+  if (open) $('bDlHtml').focus();
+}
+async function downloadPresentation(){
+  toggleDlMenu(false); flushSaves();
+  if (!frames.size){ $('empty').hidden = false; setTimeout(() => $('empty').hidden = true, 2200); return; }
+  await saveFile(exportName('html'), buildExportHtml(), 'text/html');
+}
+async function downloadDrawing(){
+  toggleDlMenu(false); flushSaves();
+  await saveFile(exportName('svg'), '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(buildExportSvg()) + '\n', 'image/svg+xml');
+}
+// inside claude.ai saving needs the downloads capability; hide the button when this view has none
+$('bDownload').hidden = !!window.claude;
+(async () => {
+  try { downloads = window.claude ? await window.claude.use('downloads') : null; } catch (e) { downloads = null; }
+  $('bDownload').hidden = !!window.claude && !downloads;
+})();
+$('bDownload').onclick = e => { e.stopPropagation(); toggleDlMenu(); };
+$('bDlHtml').onclick = downloadPresentation;
+$('bDlSvg').onclick = downloadDrawing;
+document.addEventListener('pointerdown', e => { if (!$('dlMenu').hidden && !e.target.closest('#dlMenu,#bDownload')) toggleDlMenu(false); }, true);
+window.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('dlMenu').hidden){ e.stopPropagation(); toggleDlMenu(false); $('bDownload').focus(); } }, true);
 
 /* ---------------- chrome ---------------- */
 let hintDone = false;
