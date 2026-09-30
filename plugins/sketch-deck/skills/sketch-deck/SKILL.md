@@ -49,7 +49,10 @@ Playwright and Chromium (`pip install playwright`, then
   and frame outlines.
 - Download (toolbar) saves what Present shows in the current Sketch / Both /
   Clean view, as a standalone presentation (`.html`: one file with the
-  slides, build steps, keyboard, tap and swipe navigation, fullscreen) or as
+  slides, build steps, keyboard, tap and swipe navigation, fullscreen, and a
+  slide navigator (S) to hide, show and reorder slides for an audience,
+  remembered per file in that browser, with "Save copy" writing a new file
+  with that arrangement built in) or as
   a drawing for Inkscape (`.svg`: each slide a layer `slide N` with build
   steps as sublayers `step N`, plus hidden `frames` and `notes` layers). The
   `.svg` follows the inkscape-presenter layer conventions. Saving goes
