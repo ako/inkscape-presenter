@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sketch Deck Example</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500&amp;family=Unbounded:wght@500;700&amp;display=swap"><style>html,body{margin:0;height:100%;overflow:hidden;background:#181c20}#deck{display:block;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none}[data-sd-step]{transition:opacity .45s ease}.sd-hidden{opacity:0!important;pointer-events:none}@media (prefers-reduced-motion:reduce){[data-sd-step]{transition:none}}[hidden]{display:none!important}#hud{position:fixed;right:16px;bottom:16px;display:flex;align-items:center;gap:6px;font:13px "IBM Plex Mono",Menlo,monospace;color:#e0a106;background:rgba(22,26,30,.9);border:1px solid rgba(236,238,233,.14);border-radius:999px;padding:4px 11px 4px 4px;transition:opacity .4s}#hud.idle{opacity:0;pointer-events:none}#hud button,#nav button{font:500 13px "IBM Plex Sans",Arial,sans-serif;color:#e6e9e4;background:transparent;border:1px solid rgba(236,238,233,.14);border-radius:999px;padding:4px 10px;cursor:pointer}#hud button:hover,#nav button:hover{background:rgba(236,238,233,.08)}#hud button:focus-visible,#nav button:focus-visible,#nav input:focus-visible,#navList li:focus-visible{outline:2px solid #e0a106;outline-offset:1px}#nav{position:fixed;z-index:5;left:16px;top:16px;bottom:16px;width:340px;max-width:calc(100% - 32px);display:flex;flex-direction:column;background:rgba(22,26,30,.94);color:#e6e9e4;border:1px solid rgba(236,238,233,.14);border-radius:12px;font:13px "IBM Plex Sans",Arial,sans-serif;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}#nav header{display:flex;align-items:baseline;gap:8px;padding:12px 12px 8px 16px;border-bottom:1px solid rgba(236,238,233,.14)}#nav h2{font:500 14px "Unbounded",Arial,sans-serif;margin:0}#navSub{flex:1;color:#98a4ab;font:12px "IBM Plex Mono",Menlo,monospace}#nav .help{margin:0;padding:8px 16px 0;color:#98a4ab;font-size:12.5px;line-height:1.45}#navList{list-style:none;margin:0;padding:8px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:4px}#navList li{display:grid;grid-template-columns:18px 76px minmax(0,1fr) auto;align-items:center;gap:8px;padding:6px;border-radius:8px;border:1px solid transparent;cursor:pointer}#navList li:hover{background:rgba(236,238,233,.06)}#navList li.current{background:rgba(224,161,6,.12);border-color:rgba(224,161,6,.45)}#navList li.dragover{border-top:2px solid #e0a106}#navList li.off .thumb,#navList li.off .ttl{opacity:.4}#navList input{accent-color:#e0a106;margin:0}.thumb{display:block;width:76px;aspect-ratio:16/9;background:#eceee9;border-radius:3px}.ttl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.num{font:12px "IBM Plex Mono",Menlo,monospace;color:#e0a106}.acts{display:flex;gap:2px}#nav .ib{width:26px;height:26px;padding:0;border-radius:6px;border-color:transparent}#nav footer{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;border-top:1px solid rgba(236,238,233,.14)}#nav footer input{flex:1 1 100%;box-sizing:border-box;font:13px "IBM Plex Sans",Arial,sans-serif;color:#e6e9e4;background:#20262b;border:1px solid rgba(236,238,233,.14);border-radius:7px;padding:6px 8px}</style></head><body>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" viewBox="372.9 267.2 1691.8 516" id="deck" preserveAspectRatio="xMidYMid meet"><title>Sketch Deck Example</title><style>@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500&amp;family=Unbounded:wght@500;700&amp;display=swap");.d{font-family:"Unbounded","Arial Black",sans-serif;font-weight:700;fill:#1b2a33}.d5{font-family:"Unbounded","Arial Black",sans-serif;font-weight:500;fill:#1b2a33}.b{font-family:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;fill:#1b2a33}.m{font-family:"IBM Plex Mono",Menlo,Consolas,monospace;fill:#6f7d86;white-space:pre}</style><g inkscape:groupmode="layer" inkscape:label="background" sodipodi:insensitive="true"><rect x="372.9" y="267.2" width="1691.8" height="516" fill="#eceee9"/></g><g inkscape:groupmode="layer" inkscape:label="slide 1" id="slide-1" data-sd-slide="1" data-sd-frame="420.8 315.1 743.2 418"><title>41 sketch items</title><path stroke-width="2.3" d="M841.6 471.3Q839.8 472.6 839.1 472.6Q838.5 472.6 839.0 472.4Q839.4 472.2 842.5 471.3Q845.5 470.4 850.0 469.9L854.4 469.5" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M870.2 473Q869.8 468.6 875.8 468.9Q881.7 469.1 887.7 468.0L893.6 466.9" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M601.6 606.1Q601.6 604.3 601.4 603.6Q601.1 603 600.9 603.2Q600.7 603.4 600.7 617.3L600.7 631.2" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M524 533.4Q528.9 533.4 539.7 530.8Q550.5 528.1 562.0 526.4Q573.4 524.6 588.6 524.6L603.8 524.6" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M496.3 422.4Q498 423.3 497.8 428.6Q497.6 433.8 498.3 442.0Q498.9 450.1 499.1 462.3Q499.4 474.4 500.3 481.6Q501.1 488.9 505.1 507.6Q509.1 526.3 508.4 522.3Q507.7 518.4 509.7 536.7Q511.7 555 512.8 572.8Q513.9 590.6 513.9 600.8Q513.9 610.9 513.9 607.0Q513.9 603 513.7 609.0Q513.5 614.9 512.8 618.0Q512.1 621 512.1 620.4Q512.1 619.7 511.7 620.8Q511.3 621.9 510.2 616.2L509.1 610.5" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M823.1 581.4L822.6 580.1" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M514.8 574.3Q556.6 574.3 578.4 569.5Q600.2 564.7 607.3 564.0Q614.3 563.3 619.0 563.5L623.6 563.8" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M525.4 556.3Q527.1 558 528.9 558.0Q530.6 558 537.3 554.5Q543.9 551 547.4 549.7Q550.9 548.4 563.6 545.3Q576.4 542.2 579.8 541.8Q583.1 541.3 596.5 541.3Q609.9 541.3 613.6 542.0L617.4 542.6" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M779 413.1Q780.8 409.2 781.0 406.8Q781.2 404.3 781.0 433.9Q780.8 463.4 782.1 500.3Q783.4 537.3 783.8 570.1Q784.3 603 785.0 606.5Q785.6 610 786.0 610.5Q786.5 610.9 787.0 610.9Q787.4 610.9 786.5 610.5Q785.6 610 786.0 610.5Q786.5 610.9 787.9 610.9Q789.2 610.9 789.4 610.5Q789.6 610 789.0 610.5Q788.3 610.9 789.0 610.5L789.6 610" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M500.7 426.4Q508.2 423.7 532.6 421.3Q557.1 418.9 564.4 417.8Q571.6 416.7 592.1 412.5Q612.6 408.3 623.0 408.3Q633.3 408.3 635.9 409.0Q638.5 409.6 637.2 409.4Q635.9 409.2 637.2 409.4Q638.5 409.6 639.9 410.7Q641.2 411.8 640.8 411.4Q640.3 410.9 640.8 411.4Q641.2 411.8 641.2 413.8Q641.2 415.8 640.3 420.0Q639.4 424.2 639.4 435.2Q639.4 446.2 641.6 474.1Q643.8 502.1 643.8 526.5Q643.8 551 644.5 562.9Q645.2 574.8 645.9 580.5Q646.5 586.2 645.9 577.7Q645.2 569.1 647.2 593.3Q649.1 617.5 648.7 612.6Q648.2 607.8 648.7 612.6Q649.1 617.5 649.1 627.4Q649.1 637.3 649.1 636.0Q649.1 634.7 649.1 636.0Q649.1 637.3 648.5 637.8Q647.8 638.2 645.8 638.2Q643.8 638.2 637.8 636.2Q631.9 634.2 624.8 634.2Q617.8 634.2 603.3 636.4Q588.8 638.6 563.3 640.9Q537.7 643.1 522.3 642.7Q506.9 642.2 508.6 642.2Q510.4 642.2 508.6 642.2Q506.9 642.2 506.2 642.9Q505.5 643.5 505.5 645.3L505.5 647" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M803.7 410.5Q797.5 413.6 798.4 413.1Q799.3 412.7 796.5 413.6Q793.6 414.5 795.2 414.1Q796.7 413.6 791.0 414.5Q785.2 415.3 787.4 415.3Q789.6 415.3 798.9 413.6Q808.1 411.8 813.2 411.6Q818.2 411.4 847.3 411.9Q876.4 412.3 891.1 410.3Q905.9 408.3 910.5 408.3Q915.1 408.3 917.3 409.0Q919.5 409.6 921.5 411.1Q923.5 412.7 925.3 415.8Q927 418.9 928.5 424.6Q930.1 430.3 931.7 449.1Q933.2 467.8 934.1 490.3Q935 512.7 934.8 505.0Q934.5 497.3 934.8 505.0Q935 512.7 936.3 526.5Q937.6 540.4 937.4 537.1Q937.2 533.8 937.9 540.0Q938.5 546.2 939.6 551.0Q940.7 555.8 943.4 563.8Q946 571.7 946.0 573.9Q946 576.1 944.6 577.4Q943.3 578.7 931.6 580.5Q920 582.3 900.4 589.5Q880.8 596.8 861.4 600.3Q842 603.9 826.8 607.6L811.6 611.3" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M871.1 560.7Q868 560.7 868.0 560.0Q868 559.4 868.9 558.7Q869.8 558 869.5 568.4Q869.3 578.7 870.0 582.5Q870.7 586.2 871.1 588.2Q871.5 590.2 872.6 591.5Q873.7 592.8 874.6 592.6Q875.5 592.4 876.1 590.6L876.8 588.9" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M874.2 509.6Q874.2 510.5 875.0 510.5Q875.9 510.5 878.3 509.4Q880.8 508.3 886.5 507.2L892.2 506.1" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M805.9 469.5Q805.5 473 807.9 473.0Q810.3 473 815.8 471.3L821.3 469.5" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M809 593.3Q802.4 594.2 803.3 594.2Q804.1 594.2 800.0 595.3Q795.8 596.4 789.2 599.0Q782.6 601.7 771.2 604.8Q759.7 607.8 741.0 615.3Q722.2 622.8 710.8 626.8Q699.3 630.7 690.7 634.9Q682.1 639.1 687.7 634.7Q693.2 630.3 698.5 624.3Q703.7 618.4 694.3 624.5Q684.8 630.7 672.0 638.2Q659.2 645.7 658.4 647.0Q657.5 648.3 658.1 649.4Q658.8 650.5 660.3 651.4Q661.9 652.3 666.8 653.6Q671.6 654.9 679.5 654.9Q687.4 654.9 691.1 654.5L694.9 654.1" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M840.3 535.1Q840.3 541.3 839.2 542.6Q838.1 544 836.8 543.8Q835.4 543.5 835.4 542.0Q835.4 540.4 843.5 537.8Q851.7 535.1 854.4 534.7L857 534.3" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M836.3 518.4Q838.5 513.6 840.3 512.3Q842 510.9 849.5 511.4L857 511.8" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M1002.3 547Q1001 547.9 1001.0 549.3Q1001 550.6 1002.8 552.8Q1004.5 555 1012.5 557.6Q1020.4 560.2 1021.5 561.4Q1022.6 562.5 1022.8 563.8Q1023 565.1 1016.2 569.7Q1009.4 574.3 1003.0 580.0Q996.6 585.8 991.1 589.5L985.6 593.3" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M512.1 594.2Q519.6 594.2 527.5 593.1Q535.5 592 546.3 591.5Q557.1 591.1 568.1 590.0Q579.1 588.9 595.2 584.5L611.2 580.1" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M903.2 525Q904.6 525.5 907.5 524.0Q910.3 522.4 915.1 522.0L920 521.5" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M904.6 507Q905 507.8 909.4 506.5Q913.8 505.2 917.3 505.4L920.9 505.6" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M1086.5 532.5Q1086 530.7 1084.9 529.9Q1083.8 529 1082.3 529.0Q1080.7 529 1079.4 529.9Q1078.1 530.7 1076.1 532.7Q1074.1 534.7 1075.4 533.4Q1076.8 532.1 1075.4 533.4Q1074.1 534.7 1073.0 536.9Q1071.9 539.1 1071.1 543.5Q1070.2 547.9 1070.2 549.6Q1070.2 551.4 1070.6 547.3Q1071 543.1 1070.6 545.5Q1070.2 547.9 1070.2 555.2Q1070.2 562.5 1070.2 558.5Q1070.2 554.5 1070.2 558.5Q1070.2 562.5 1071.3 565.5Q1072.4 568.6 1071.5 566.4Q1070.6 564.2 1071.5 566.4Q1072.4 568.6 1075.1 569.0Q1077.7 569.5 1081.2 566.6Q1084.7 563.8 1085.8 562.0Q1086.9 560.2 1084.9 562.9Q1082.9 565.5 1084.5 563.8Q1086 562 1088.8 557.0Q1091.7 551.9 1090.0 555.2Q1088.2 558.5 1090.0 555.2Q1091.7 551.9 1092.4 548.8Q1093.1 545.7 1093.1 543.5Q1093.1 541.3 1092.2 538.9Q1091.3 536.5 1088.2 534.3Q1085.1 532.1 1082.9 532.1Q1080.7 532.1 1079.2 533.0Q1077.7 533.8 1075.7 537.5Q1073.7 541.3 1073.1 544.8L1072.4 548.4" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M905 491.1L917.8 490.2" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M803.3 548.4Q801.9 549.7 806.3 547.5Q810.8 545.3 814.1 544.6Q817.4 544 819.8 544.0L822.2 544" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M905.4 468.6Q910.3 468.6 914.7 470.8L919.1 473" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M1066.6 615.7Q1065.3 614.9 1065.3 609.6Q1065.3 604.3 1065.3 606.3Q1065.3 608.3 1065.8 601.3Q1066.2 594.2 1067.3 588.0Q1068.4 581.8 1070.4 578.5Q1072.4 575.2 1073.7 574.1Q1075 573 1073.3 574.8Q1071.5 576.5 1073.3 574.8Q1075 573 1077.5 571.7Q1079.9 570.4 1077.9 571.5Q1075.9 572.6 1077.9 571.5Q1079.9 570.4 1083.2 570.0Q1086.5 569.5 1088.5 571.3Q1090.4 573 1088.5 571.3Q1086.5 569.5 1088.5 571.3Q1090.4 573 1091.8 575.6Q1093.1 578.3 1095.3 583.6Q1097.5 588.9 1099.9 597.5Q1102.3 606.1 1102.9 610.3Q1103.6 614.4 1103.4 618.0Q1103.2 621.5 1103.4 620.8Q1103.6 620.1 1102.5 621.5Q1101.4 622.8 1101.8 622.3Q1102.3 621.9 1101.8 622.3Q1101.4 622.8 1099.5 622.8Q1097.5 622.8 1093.8 620.1Q1090 617.5 1086.7 616.4Q1083.4 615.3 1079.7 614.8Q1075.9 614.4 1074.2 614.4Q1072.4 614.4 1069.1 615.3Q1065.8 616.2 1061.4 618.2Q1057 620.1 1056.8 619.9Q1056.5 619.7 1057.0 619.3L1057.4 618.8" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M806.4 522.4Q806.8 523.7 813.0 520.2Q819.1 516.6 821.1 516.4Q823.1 516.2 823.3 516.7L823.5 517.1" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M837.2 499Q845.1 493.3 848.9 491.3Q852.6 489.3 852.6 490.9Q852.6 492.4 853.3 493.3L853.9 494.2" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M878.6 494.2Q874.6 492 877.3 492.0Q879.9 492 886.5 490.9L893.1 489.8" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M805.9 579.2Q805.5 580.1 804.4 580.3Q803.3 580.5 804.4 584.9Q805.5 589.3 805.5 595.0Q805.5 600.8 806.8 599.0Q808.1 597.2 809.7 596.8Q811.2 596.4 823.5 596.4Q835.9 596.4 838.3 597.0Q840.7 597.7 842.5 597.7Q844.2 597.7 843.5 597.9Q842.9 598.1 842.5 597.3Q842 596.4 842.5 583.8Q842.9 571.3 842.0 571.3Q841.1 571.3 840.7 571.7Q840.3 572.1 838.8 575.0Q837.2 577.9 831.0 577.9Q824.8 577.9 822.0 578.3Q819.1 578.7 809.7 581.0Q800.2 583.2 799.5 583.4Q798.9 583.6 799.8 583.6L800.6 583.6" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M513 488Q515.2 488.9 517.4 488.9Q519.6 488.9 523.6 487.8Q527.6 486.7 532.2 486.0Q536.8 485.4 556.6 484.3Q576.4 483.2 583.9 482.1Q591.4 481 595.8 481.2Q600.2 481.4 601.5 482.5Q602.9 483.6 602.9 484.1L602.9 484.5" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M524 615.7Q536.8 611.8 550.5 610.7Q564.1 609.6 579.3 606.5L594.5 603.4" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M602.4 605.6Q605.1 606.1 606.9 605.0Q608.6 603.9 610.4 603.5Q612.1 603 615.9 603.0Q619.6 603 620.7 603.2Q621.8 603.4 624.5 605.0Q627.1 606.5 630.2 606.3Q633.3 606.1 632.4 606.5Q631.5 606.9 632.0 606.7Q632.4 606.5 632.0 606.7Q631.5 606.9 631.3 607.8Q631.1 608.7 630.7 616.4Q630.2 624.1 630.2 622.1Q630.2 620.1 630.2 622.1Q630.2 624.1 629.5 627.0Q628.9 629.8 622.5 630.0Q616.1 630.3 609.0 631.8Q602 633.4 598.5 633.1Q594.9 632.9 594.3 632.3Q593.6 631.6 593.9 631.2Q594.1 630.7 596.5 630.5L598.9 630.3" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M875.9 527.2Q877.3 529.9 880.1 529.6Q883 529.4 885.4 528.5L887.8 527.7" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M515.7 506.5Q533.7 506.1 541.9 505.2Q550 504.3 559.0 502.8Q568.1 501.2 574.3 501.2Q580.4 501.2 585.7 503.2Q591 505.2 594.0 505.4L597.1 505.6" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M619.2 618.8Q625.3 616.6 632.1 612.5Q639 608.3 644.3 605.8Q649.6 603.4 655.3 602.1Q661 600.8 674.0 598.8Q687 596.8 700.2 593.5Q713.4 590.2 757.0 575.9Q800.6 561.6 799.3 562.0Q798 562.5 802.2 561.8Q806.4 561.1 803.0 563.8L799.7 566.4" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M869.8 556.7Q870.7 558 871.4 558.0Q872 558 883.5 552.5Q894.9 547 898.4 546.6Q901.9 546.2 905.5 548.8Q909 551.4 909.6 556.0Q910.3 560.7 910.1 563.4Q909.9 566 908.3 569.0Q906.8 572.1 906.8 573.0Q906.8 573.9 907.5 574.5Q908.1 575.2 909.0 577.4Q909.9 579.6 905.9 578.8Q901.9 577.9 898.6 577.9Q895.3 577.9 896.8 577.9Q898.4 577.9 896.8 577.9Q895.3 577.9 892.0 578.8Q888.7 579.6 890.7 579.2Q892.7 578.7 887.9 580.3Q883 581.8 885.2 581.1Q887.4 580.5 885.2 581.1Q883 581.8 875.3 586.0Q867.6 590.2 869.4 588.9L871.1 587.6" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M1024.4 470Q1023 468.6 1026.1 468.6Q1029.2 468.6 1032.5 469.5Q1035.8 470.4 1042.2 473.0Q1048.6 475.7 1056.1 479.6Q1063.6 483.6 1067.1 485.0Q1070.6 486.3 1074.3 487.0Q1078.1 487.6 1081.6 487.6Q1085.1 487.6 1101.7 483.6Q1118.2 479.7 1125.3 478.8Q1132.3 477.9 1135.3 477.9Q1138.4 477.9 1139.8 478.4Q1141.1 478.8 1141.9 479.6Q1142.8 480.5 1143.0 481.4Q1143.3 482.3 1143.0 481.4Q1142.8 480.5 1143.0 485.6Q1143.3 490.7 1143.3 487.8Q1143.3 484.9 1143.3 487.8Q1143.3 490.7 1142.7 494.6Q1142 498.6 1142.0 500.4Q1142 502.1 1142.4 497.7Q1142.8 493.3 1142.2 502.1Q1141.5 510.9 1141.5 544.8Q1141.5 578.7 1141.5 568.2Q1141.5 557.6 1141.5 568.2Q1141.5 578.7 1140.8 589.0Q1140.2 599.4 1140.7 592.4Q1141.1 585.4 1140.0 598.1Q1138.9 610.9 1135.6 632.0Q1132.3 653.2 1132.3 650.5Q1132.3 647.9 1129.0 648.3Q1125.7 648.8 1117.3 646.8Q1108.9 644.8 1100.8 644.6Q1092.6 644.4 1084.4 647.0Q1076.3 649.7 1075.0 650.5Q1073.7 651.4 1078.3 649.2Q1082.9 647 1079.6 648.4Q1076.3 649.7 1069.5 653.9Q1062.7 658 1063.6 657.5Q1064.4 657.1 1062.9 657.5Q1061.4 658 1061.4 657.4L1061.4 656.7" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M808.1 493.7Q808.1 494.6 807.0 495.5Q805.9 496.4 806.8 496.4Q807.7 496.4 811.9 494.6L816 492.9" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M1036.3 444Q1033.6 446.2 1033.4 447.8Q1033.2 449.3 1033.2 460.3Q1033.2 471.3 1034.1 490.6Q1034.9 510 1036.7 528.8Q1038.5 547.5 1043.3 579.9Q1048.1 612.2 1048.3 618.0Q1048.6 623.7 1047.9 614.7Q1047.3 605.6 1047.9 612.0Q1048.6 618.4 1048.8 630.3Q1049 642.2 1048.5 644.2Q1048.1 646.1 1048.5 644.2Q1049 642.2 1048.5 644.2Q1048.1 646.1 1047.4 643.7L1046.8 641.3" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="2.3" d="M920 558Q916.5 559.4 916.7 559.8Q916.9 560.2 926.1 561.1Q935.4 562 942.9 563.5Q950.4 565.1 974.1 565.1Q997.9 565.1 1003.2 563.8L1008.5 562.5" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/></g><g inkscape:groupmode="layer" inkscape:label="slide 2" id="slide-2" data-sd-slide="2" data-sd-frame="1269.8 315.1 747 420.2"><title>9 sketch items</title><g inkscape:groupmode="layer" inkscape:label="step 1 · House" data-sd-step="0"><path stroke-width="3.8" d="M1352.4 477.4Q1354.9 456.9 1358.0 446.0Q1361 435.2 1363.8 429.9Q1366.6 424.7 1369.1 416.1Q1371.6 407.6 1379.3 423.0Q1387 438.3 1391.9 446.7Q1396.8 455.1 1400.8 460.3Q1404.8 465.5 1403.8 465.8Q1402.8 466.1 1401.8 464.6L1400.9 463.1" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="3.8" d="M1337.8 469.5Q1341.1 487.8 1342.4 503.5Q1343.8 519.3 1346.2 528.2Q1348.5 537.1 1349.0 547.7Q1349.6 558.3 1350.3 557.6Q1351 556.9 1354.3 556.9Q1357.6 556.9 1366.8 554.6Q1375.9 552.4 1392.3 552.4Q1408.7 552.4 1418.5 551.6Q1428.2 550.9 1430.7 550.0Q1433.2 549 1430.8 545.7Q1428.5 542.4 1427.2 535.0Q1425.9 527.5 1421.4 512.0Q1416.9 496.6 1415.5 487.6Q1414 478.7 1411.3 480.4Q1408.5 482 1402.0 481.6Q1395.6 481.3 1392.1 482.0Q1388.6 482.7 1379.9 482.7Q1371.3 482.7 1367.8 481.8L1364.4 480.8" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/></g><g inkscape:groupmode="layer" inkscape:label="step 2 · Tree" data-sd-step="1"><path stroke-width="3.8" d="M1495 468.7Q1495 467.4 1492.8 465.9Q1490.5 464.5 1485.8 465.5Q1481.2 466.5 1480.0 467.4Q1478.7 468.3 1478.1 474.8Q1477.4 481.3 1478.2 484.1Q1479 487 1482.2 491.7Q1485.3 496.4 1490.2 499.6Q1495 502.8 1502.3 502.8Q1509.7 502.8 1519.3 496.4Q1528.8 490 1528.8 486.1Q1528.8 482.2 1527.9 480.9Q1527.1 479.7 1525.8 479.7Q1524.5 479.7 1524.5 481.5Q1524.5 483.4 1527.3 485.4Q1530 487.5 1538.2 484.9Q1546.3 482.2 1550.7 478.7Q1555 475.2 1557.3 469.4Q1559.6 463.5 1559.6 449.9Q1559.6 436.4 1558.5 435.8Q1557.4 435.1 1556.3 431.6Q1555.1 428 1552.8 426.1Q1550.5 424.1 1545.3 422.8Q1540.1 421.4 1531.0 421.4Q1521.9 421.4 1519.5 421.9Q1517.1 422.5 1515.3 424.3Q1513.6 426.1 1514.5 427.5Q1515.5 428.9 1518.4 428.9Q1521.3 428.9 1524.8 427.9Q1528.3 426.8 1529.6 425.3Q1530.9 423.7 1529.8 419.0Q1528.6 414.4 1524.9 409.5Q1521.3 404.7 1509.9 395.8Q1498.6 386.8 1494.5 386.8Q1490.4 386.8 1489.0 389.4Q1487.6 392 1490.4 388.1Q1493.2 384.3 1488.1 382.2Q1483 380.1 1480.4 386.9Q1477.8 393.7 1476.7 400.0Q1475.5 406.3 1475.5 421.5Q1475.5 436.6 1477.1 436.6Q1478.7 436.6 1483.6 441.8Q1488.4 447 1489.1 453.1Q1489.8 459.3 1489.1 460.0Q1488.4 460.6 1488.8 459.0Q1489.1 457.4 1487.9 458.3Q1486.7 459.1 1485.7 462.8Q1484.6 466.5 1485.9 466.5Q1487.2 466.5 1488.6 465.4L1490 464.4" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="3.8" d="M1493.5 493.7Q1497.4 504.3 1501.3 526.0Q1505.3 547.6 1506.9 546.6Q1508.5 545.6 1514.5 545.0Q1520.4 544.4 1518.8 544.0Q1517.2 543.6 1516.8 542.3Q1516.5 540.9 1515.9 533.5Q1515.3 526.1 1513.9 520.1Q1512.6 514.1 1511.3 512.3Q1510.1 510.4 1510.8 503.4Q1511.4 496.3 1510.4 495.3L1509.4 494.3" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/></g><g inkscape:groupmode="layer" inkscape:label="step 3 · Car" data-sd-step="2"><path stroke-width="3.8" d="M1672.8 530.5Q1669.4 530.5 1667.3 532.5Q1665.3 534.6 1665.3 545.8Q1665.3 557 1666.3 558.0Q1667.3 558.9 1668.5 558.9Q1669.8 558.9 1673.9 555.3Q1678 551.7 1678.4 548.0Q1678.8 544.4 1677.3 541.2Q1675.9 538 1674.3 536.7Q1672.8 535.4 1670.9 535.3Q1669 535.2 1667.5 540.6L1666 546" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="3.8" d="M1619 495.7Q1618.4 537.8 1619.3 536.2Q1620.3 534.6 1630.9 534.6Q1641.5 534.6 1644.4 533.0Q1647.3 531.3 1649.8 531.0Q1652.3 530.6 1651.9 531.4Q1651.6 532.2 1650.9 532.2Q1650.3 532.2 1650.3 530.5Q1650.3 528.9 1648.4 526.0Q1646.6 523 1646.6 521.8Q1646.6 520.5 1649.8 517.9Q1652.9 515.2 1654.7 514.6Q1656.5 514 1666.5 514.0Q1676.5 514 1677.2 514.6Q1677.8 515.3 1677.8 521.1Q1677.8 527 1678.8 531.6Q1679.7 536.2 1681.1 535.2Q1682.4 534.2 1685.5 535.0Q1688.5 535.7 1703.0 535.1Q1717.6 534.5 1722.6 532.0Q1727.6 529.5 1733.6 529.4Q1739.6 529.3 1736.4 527.8Q1733.3 526.4 1733.3 522.3Q1733.3 518.3 1740.0 516.0Q1746.8 513.8 1747.8 514.1Q1748.8 514.5 1750.3 517.5Q1751.7 520.4 1752.1 525.9Q1752.4 531.4 1767.3 530.8Q1782.3 530.2 1781.0 526.7Q1779.7 523.2 1779.7 515.8Q1779.7 508.4 1780.3 506.4Q1781 504.4 1779.8 502.6Q1778.6 500.8 1778.3 497.7Q1777.9 494.6 1763.8 495.6Q1749.7 496.6 1747.3 495.2Q1744.9 493.8 1740.0 492.7Q1735.1 491.6 1734.4 490.3Q1733.8 489 1733.8 483.4Q1733.8 477.8 1732.3 468.0Q1730.9 458.2 1722.6 458.5Q1714.2 458.9 1707.2 460.1Q1700.2 461.4 1694.9 461.4Q1689.6 461.4 1685.4 460.4Q1681.3 459.4 1677.7 461.6Q1674.1 463.8 1668.8 465.1Q1663.6 466.4 1663.3 476.9Q1662.9 487.3 1658.5 487.3Q1654 487.3 1651.5 488.3Q1649.1 489.3 1644.0 489.8Q1639 490.2 1633.9 494.4Q1628.8 498.5 1627.5 498.5Q1626.2 498.5 1625.8 499.4L1625.5 500.4" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="3.8" d="M1746.1 527.3Q1741.1 527.3 1739.9 528.9Q1738.7 530.5 1736.6 537.0Q1734.5 543.6 1735.9 546.8Q1737.3 549.9 1738.6 550.8Q1739.9 551.6 1744.0 551.6Q1748 551.6 1750.8 549.2Q1753.6 546.7 1756.0 542.9Q1758.4 539 1756.2 536.0Q1754 532.9 1750.8 531.9Q1747.7 530.9 1745.8 535.4L1743.8 539.9" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/></g><g inkscape:groupmode="layer" inkscape:label="step 4 · Tower" data-sd-step="3"><path stroke-width="3.8" d="M1857.5 445.7Q1861.5 436.4 1861.5 434.1Q1861.5 431.8 1863.5 426.1Q1865.5 420.5 1867.2 406.9Q1868.8 393.4 1869.2 381.6Q1869.5 369.9 1869.0 376.2Q1868.6 382.5 1876.1 404.6Q1883.6 426.7 1882.9 426.4Q1882.3 426 1882.3 431.5Q1882.3 437 1882.9 438.0L1883.6 439" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/><path stroke-width="3.8" d="M1859.3 546.1Q1859.3 544.7 1867.0 544.7Q1874.7 544.7 1880.0 542.3Q1885.2 539.9 1891.0 538.8Q1896.7 537.6 1898.7 538.6Q1900.7 539.6 1902.6 539.3Q1904.4 538.9 1901.3 537.3Q1898.3 535.6 1899.8 532.6Q1901.2 529.6 1901.2 522.7Q1901.2 515.8 1898.7 498.8Q1896.2 481.9 1893.5 473.4Q1890.8 465 1888.6 453.1Q1886.4 441.1 1882.3 443.0Q1878.1 444.9 1872.1 444.9Q1866.1 444.9 1862.8 446.4Q1859.6 447.8 1859.3 458.1Q1858.9 468.5 1862.8 493.9Q1866.6 519.3 1867.5 527.1Q1868.4 535 1868.4 545.3Q1868.4 555.5 1868.8 551.3Q1869.1 547 1867.9 542.5L1866.8 537.9" fill="none" stroke="#1b2a33" stroke-linecap="round" stroke-linejoin="round"/></g></g><g inkscape:groupmode="layer" inkscape:label="frames" style="display:none"><rect id="frame-1" x="420.8" y="315.1" width="743.2" height="418" fill="none" stroke="#e0a106" stroke-width="1.5" stroke-dasharray="4.5 3"/><rect id="frame-2" x="1269.8" y="315.1" width="747" height="420.2" fill="none" stroke="#e0a106" stroke-width="1.5" stroke-dasharray="4.5 3"/></g></svg>
+<div id="hud"><button id="navBtn" aria-expanded="false" aria-controls="nav" title="Slides: show, hide and reorder (S)">Slides</button><span id="count" aria-live="polite"></span></div><aside id="nav" hidden aria-label="Slides"><header><h2>Slides</h2><span id="navSub"></span><button id="navClose" class="ib" aria-label="Close slides">×</button></header><p class="help">Untick a slide to skip it, drag or use the arrows to reorder. Changes stay in this browser; save a copy to keep this version as its own file.</p><ol id="navList"></ol><footer><input id="navName" type="text" placeholder="Name for this version, e.g. Board meeting" aria-label="Name for this version"><button id="navSave">Save copy</button><button id="navAll">Show all</button><button id="navReset" title="Back to this file’s own order">Reset</button></footer></aside><script type="application/json" id="sd-arrangement">null</script>
+<script>(function sketchDeckPlayer(){
+  var NS = 'http://www.w3.org/2000/svg';
+  var $ = function(id){ return document.getElementById(id); };
+  var svg = $('deck'), hud = $('hud'), count = $('count'), nav = $('nav'), list = $('navList');
+  var slides = [].slice.call(svg.querySelectorAll('[data-sd-slide]')).map(function(g){
+    var f = g.getAttribute('data-sd-frame').split(' ').map(Number);
+    var t = [].filter.call(g.children, function(c){ return c.tagName === 'title'; })[0];
+    var id = +g.getAttribute('data-sd-slide');
+    var steps = [].slice.call(g.querySelectorAll('[data-sd-step]')).sort(function(a, b){ return a.getAttribute('data-sd-step') - b.getAttribute('data-sd-step'); });
+    return { id: id, g: g, x: f[0], y: f[1], w: f[2], h: f[3], title: (t && t.textContent) || 'Slide ' + id, steps: steps };
+  });
+  var byId = {};
+  slides.forEach(function(s){ byId[s.id] = s; });
+  var ids = slides.map(function(s){ return s.id; });
+
+  /* ---- arrangement: order of all slides, and which are hidden ---- */
+  function normalize(a){
+    if (!a || !a.order || !a.order.length) return null;
+    var order = a.order.filter(function(id, i, o){ return byId[id] && o.indexOf(id) === i; });
+    ids.forEach(function(id){ if (order.indexOf(id) < 0) order.push(id); });
+    return { order: order, hidden: (a.hidden || []).filter(function(id){ return byId[id]; }) };
+  }
+  var fileArr = null;
+  try { fileArr = JSON.parse(($('sd-arrangement') || {}).textContent || 'null'); } catch (e) {}
+  var storeKey = 'sketch-deck:' + location.pathname + ':' + document.title + ':' + ids.length;
+  var saved = null;
+  try { saved = JSON.parse(localStorage.getItem(storeKey) || 'null'); } catch (e) {}
+  var arr = normalize(saved) || normalize(fileArr) || { order: ids.slice(), hidden: [] };
+  var seq = [];
+  function rebuild(){ seq = arr.order.filter(function(id){ return arr.hidden.indexOf(id) < 0; }).map(function(id){ return byId[id]; }); }
+  function store(){ try { localStorage.setItem(storeKey, JSON.stringify(arr)); } catch (e) {} }
+
+  /* ---- camera ---- */
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cam = null, raf = 0, pos = 0, step = 0, hudTimer = 0;
+  function setCam(c){ cam = c; svg.setAttribute('viewBox', [c.x, c.y, c.w, c.h].join(' ')); }
+  function frameView(f){ var w = f.w / 0.98, h = f.h / 0.98; return { x: f.x + f.w / 2 - w / 2, y: f.y + f.h / 2 - h / 2, w: w, h: h }; }
+  // smooth zoom and pan (van Wijk and Nuij, 2003) between views [cx, cy, width]
+  function zoom(p0, p1){
+    var rho = Math.SQRT2, ux0 = p0[0], uy0 = p0[1], w0 = p0[2], ux1 = p1[0], uy1 = p1[1], w1 = p1[2];
+    var dx = ux1 - ux0, dy = uy1 - uy0, d2 = dx * dx + dy * dy, S, i;
+    if (d2 < 1e-12){
+      S = Math.log(w1 / w0) / rho;
+      i = function(t){ return [ux0 + t * dx, uy0 + t * dy, w0 * Math.exp(rho * t * S)]; };
+    } else {
+      var d1 = Math.sqrt(d2), b0 = (w1 * w1 - w0 * w0 + 4 * d2) / (2 * w0 * 2 * d1), b1 = (w1 * w1 - w0 * w0 - 4 * d2) / (2 * w1 * 2 * d1);
+      var r0 = Math.log(Math.sqrt(b0 * b0 + 1) - b0), r1 = Math.log(Math.sqrt(b1 * b1 + 1) - b1);
+      S = (r1 - r0) / rho;
+      i = function(t){ var s = t * S, c0 = Math.cosh(r0), u = w0 / (2 * d1) * (c0 * Math.tanh(rho * s + r0) - Math.sinh(r0)); return [ux0 + u * dx, uy0 + u * dy, w0 * c0 / Math.cosh(rho * s + r0)]; };
+    }
+    i.duration = Math.abs(S) * 1000;
+    return i;
+  }
+  function ease(t){ return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+  function fly(t, instant){
+    cancelAnimationFrame(raf);
+    var f = cam;
+    if (!f || instant || reduce){ setCam(t); return; }
+    var z = zoom([f.x + f.w / 2, f.y + f.h / 2, f.w], [t.x + t.w / 2, t.y + t.h / 2, t.w]);
+    var a0 = f.h / f.w, a1 = t.h / t.w, dur = Math.min(2000, Math.max(550, z.duration * 0.85)), t0 = performance.now();
+    function frame(now){
+      var k = Math.min(1, (now - t0) / dur);
+      if (k === 1){ setCam(t); return; }
+      var e = ease(k), v = z(e), w = v[2], h = w * (a0 + (a1 - a0) * e);
+      setCam({ x: v[0] - w / 2, y: v[1] - h / 2, w: w, h: h });
+      raf = requestAnimationFrame(frame);
+    }
+    raf = requestAnimationFrame(frame);
+  }
+
+  /* ---- navigation over the shown slides ---- */
+  function showHud(){
+    hud.classList.remove('idle'); clearTimeout(hudTimer);
+    hudTimer = setTimeout(function(){ if (nav.hidden) hud.classList.add('idle'); }, 2500);
+  }
+  function apply(){
+    slides.forEach(function(s){
+      var i = seq.indexOf(s);
+      s.steps.forEach(function(g, j){ g.classList.toggle('sd-hidden', i < 0 || i > pos || (i === pos && j >= step)); });
+    });
+    var cur = seq[pos], n = cur ? cur.steps.length : 0;
+    count.textContent = cur ? (pos + 1) + ' / ' + seq.length + (n ? ' · ' + step + '/' + n : '') : 'No slides shown';
+    showHud();
+    try { history.replaceState(null, '', cur ? '#' + (pos + 1) : location.pathname + location.search); } catch (e) {}
+    if (!nav.hidden) markCurrent();
+  }
+  function go(i, atEnd, instant){
+    if (!seq.length){ apply(); return; }
+    pos = Math.max(0, Math.min(seq.length - 1, i));
+    step = atEnd ? seq[pos].steps.length : 0;
+    apply(); fly(frameView(seq[pos]), instant);
+  }
+  function next(){ if (!seq.length) return; if (step < seq[pos].steps.length){ step++; apply(); } else if (pos < seq.length - 1) go(pos + 1); }
+  function prev(){ if (!seq.length) return; if (step > 0){ step--; apply(); } else if (pos > 0) go(pos - 1, true); }
+  function fullscreen(){
+    var d = document;
+    if (d.fullscreenElement){ if (d.exitFullscreen) d.exitFullscreen(); return; }
+    var el = d.documentElement, p = el.requestFullscreen ? el.requestFullscreen() : el.webkitRequestFullscreen && el.webkitRequestFullscreen();
+    if (p && p.catch) p.catch(function(){});
+  }
+  // after a change to the arrangement: stay on the current slide, or the
+  // next shown one when it was hidden
+  function rearranged(){
+    var cur = seq[pos];
+    rebuild(); store();
+    var i = cur ? seq.indexOf(cur) : -1;
+    if (i < 0 && cur){
+      var from = arr.order.indexOf(cur.id);
+      for (var k = 0; k < arr.order.length && i < 0; k++){
+        var id = arr.order[(from + k) % arr.order.length];
+        if (arr.hidden.indexOf(id) < 0) i = seq.indexOf(byId[id]);
+      }
+    }
+    if (i < 0) i = 0;
+    if (i !== pos || seq[i] !== cur) go(i); else { pos = i; apply(); }
+    renderNav();
+  }
+
+  /* ---- slide navigator ---- */
+  var thumbs = {}, dragId = null;
+  // a picture of the whole slide, steps included
+  function thumb(s){
+    if (thumbs[s.id]) return thumbs[s.id];
+    var t = document.createElementNS(NS, 'svg');
+    t.setAttribute('viewBox', [s.x, s.y, s.w, s.h].join(' '));
+    t.setAttribute('class', 'thumb'); t.setAttribute('aria-hidden', 'true');
+    var c = s.g.cloneNode(true);
+    [c].concat([].slice.call(c.querySelectorAll('*'))).forEach(function(n){
+      n.removeAttribute('id'); n.removeAttribute('data-sd-slide'); n.removeAttribute('data-sd-step');
+      if (n.classList) n.classList.remove('sd-hidden');
+    });
+    t.appendChild(c);
+    return thumbs[s.id] = t;
+  }
+  function el(tag, attrs, kids){
+    var e = document.createElement(tag);
+    for (var k in attrs){ if (k === 'text') e.textContent = attrs[k]; else if (k.slice(0, 2) === 'on') e[k] = attrs[k]; else e.setAttribute(k, attrs[k]); }
+    (kids || []).forEach(function(c){ e.appendChild(c); });
+    return e;
+  }
+  function move(id, to){
+    var o = arr.order.filter(function(x){ return x !== id; });
+    o.splice(Math.max(0, Math.min(o.length, to)), 0, id);
+    arr.order = o; rearranged();
+  }
+  function setShown(id, on){
+    arr.hidden = arr.hidden.filter(function(x){ return x !== id; });
+    if (!on) arr.hidden.push(id);
+    rearranged();
+  }
+  function markCurrent(){
+    var cur = seq[pos];
+    [].forEach.call(list.children, function(li){ li.classList.toggle('current', !!cur && +li.dataset.id === cur.id); });
+  }
+  function renderNav(){
+    if (nav.hidden) return;
+    var focusId = document.activeElement && document.activeElement.closest && document.activeElement.closest('#navList li') ? document.activeElement.dataset.act + ':' + document.activeElement.closest('li').dataset.id : null;
+    list.textContent = '';
+    arr.order.forEach(function(id, k){
+      var s = byId[id], shown = arr.hidden.indexOf(id) < 0, n = seq.indexOf(s);
+      var li = el('li', { 'data-id': id, draggable: 'true', class: shown ? '' : 'off', title: shown ? 'Go to this slide' : 'Hidden in this presentation' }, [
+        el('input', { type: 'checkbox', 'aria-label': 'Show "' + s.title + '"', 'data-act': 'show', onchange: function(e){ setShown(id, e.target.checked); } }),
+        thumb(s),
+        el('span', { class: 'ttl' }, [el('span', { class: 'num', text: shown ? String(n + 1) : '–' }), document.createTextNode(' ' + s.title)]),
+        el('span', { class: 'acts' }, [
+          el('button', { class: 'ib', 'data-act': 'up', 'aria-label': 'Move "' + s.title + '" earlier', title: 'Earlier', text: '↑', onclick: function(e){ e.stopPropagation(); move(id, k - 1); } }),
+          el('button', { class: 'ib', 'data-act': 'down', 'aria-label': 'Move "' + s.title + '" later', title: 'Later', text: '↓', onclick: function(e){ e.stopPropagation(); move(id, k + 1); } })
+        ])
+      ]);
+      li.querySelector('input').checked = shown;
+      li.onclick = function(e){ if (e.target.closest('input,button')) return; var i = seq.indexOf(s); if (i >= 0) go(i); };
+      li.ondragstart = function(e){ dragId = id; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', String(id)); } catch (x) {} };
+      li.ondragover = function(e){ if (dragId == null) return; e.preventDefault(); li.classList.add('dragover'); };
+      li.ondragleave = function(){ li.classList.remove('dragover'); };
+      li.ondrop = function(e){
+        e.preventDefault(); li.classList.remove('dragover');
+        if (dragId == null || dragId === id) return;
+        var from = arr.order.indexOf(dragId);
+        move(dragId, from < k ? k - 1 : k); dragId = null;
+      };
+      li.ondragend = function(){ dragId = null; };
+      list.appendChild(li);
+    });
+    $('navSub').textContent = seq.length + ' of ' + slides.length + ' shown';
+    markCurrent();
+    if (focusId){
+      var p = focusId.split(':'), li2 = list.querySelector('li[data-id="' + p[1] + '"]'), b = li2 && li2.querySelector('[data-act="' + p[0] + '"]');
+      if (b) b.focus();
+    }
+  }
+  function toggleNav(open){
+    nav.hidden = open == null ? !nav.hidden : !open;
+    $('navBtn').setAttribute('aria-expanded', String(!nav.hidden));
+    if (!nav.hidden){ renderNav(); var c = list.querySelector('li.current') || list.firstChild; if (c && c.scrollIntoView) c.scrollIntoView({ block: 'nearest' }); $('navClose').focus(); }
+    showHud();
+  }
+  function slug(t){ return (t || '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'presentation'; }
+  // a copy of this file with the current arrangement built in
+  function saveCopy(){
+    var name = $('navName').value.trim();
+    var doc = document.documentElement.cloneNode(true);
+    [].forEach.call(doc.querySelectorAll('.sd-hidden'), function(n){ n.classList.remove('sd-hidden'); });
+    doc.querySelector('#navList').textContent = '';
+    doc.querySelector('#nav').setAttribute('hidden', '');
+    doc.querySelector('#navName').removeAttribute('value');
+    doc.querySelector('#count').textContent = '';
+    doc.querySelector('#hud').removeAttribute('class');
+    doc.querySelector('#sd-arrangement').textContent = JSON.stringify(arr);
+    var title = document.title + (name ? ' – ' + name : '');
+    doc.querySelector('title').textContent = title;
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['<!doctype html>\n' + doc.outerHTML], { type: 'text/html' }));
+    a.download = slug(title) + '.html';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+  }
+  $('navBtn').onclick = function(){ toggleNav(); };
+  $('navClose').onclick = function(){ toggleNav(false); };
+  $('navAll').onclick = function(){ arr.hidden = []; rearranged(); };
+  $('navReset').onclick = function(){
+    try { localStorage.removeItem(storeKey); } catch (e) {}
+    arr = normalize(fileArr) || { order: ids.slice(), hidden: [] }; rearranged();
+  };
+  $('navSave').onclick = saveCopy;
+
+  /* ---- input ---- */
+  var keys = { ArrowRight: next, ArrowDown: next, PageDown: next, ' ': next, Enter: next, ArrowLeft: prev, ArrowUp: prev, PageUp: prev, Backspace: prev,
+    Home: function(){ go(0); }, End: function(){ go(seq.length - 1, true); }, f: fullscreen, F: fullscreen,
+    s: function(){ toggleNav(); }, S: function(){ toggleNav(); } };
+  addEventListener('keydown', function(e){
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === 'Escape' && !nav.hidden){ e.preventDefault(); toggleNav(false); $('navBtn').focus(); return; }
+    // typing in the name field, and Enter / Space on a button or checkbox, belong to that control
+    var t = e.target, tag = t && t.tagName;
+    if (tag === 'INPUT' && t.type === 'text') return;
+    if ((tag === 'BUTTON' || tag === 'INPUT') && (e.key === 'Enter' || e.key === ' ')) return;
+    var k = keys[e.key];
+    if (k){ e.preventDefault(); k(); }
+  });
+  var down = null;
+  svg.addEventListener('pointerdown', function(e){ if (e.isPrimary) down = { x: e.clientX, y: e.clientY }; });
+  svg.addEventListener('pointerup', function(e){
+    if (!down) return;
+    var dx = e.clientX - down.x, dy = e.clientY - down.y; down = null;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) (dx < 0 ? next : prev)();
+    else if (Math.abs(dx) < 8 && Math.abs(dy) < 8) (e.clientX < innerWidth / 2 ? prev : next)();
+  });
+  addEventListener('mousemove', showHud);
+
+  rebuild();
+  var start = parseInt((location.hash || '').slice(1), 10);
+  go(start > 0 ? start - 1 : 0, false, true);
+})();</script>
+</body></html>

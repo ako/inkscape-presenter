@@ -71,6 +71,8 @@ skill in the settings.
 
 The skill lives in `plugins/sketch-deck/skills/sketch-deck/`: `SKILL.md`, the
 page in `template/sketch-deck.html` and the scripts in `scripts/`.
+An example deck, as a standalone presentation, an Inkscape SVG and its
+sketch data, is in `plugins/sketch-deck/examples/sketch-deck-example/`.
 
 ## License
 
