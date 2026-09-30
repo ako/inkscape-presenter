@@ -1,0 +1,12 @@
+{
+  "name": "sketch-deck",
+  "description": "Sketch slides by hand on a zoomable canvas artifact; Claude draws the finished slides into the same page.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Andrej Koelewijn"
+  },
+  "homepage": "https://github.com/ako/inkscape-presenter",
+  "repository": "https://github.com/ako/inkscape-presenter",
+  "license": "MIT",
+  "keywords": ["slides", "presentation", "sketch", "artifact"]
+}

@@ -45,6 +45,34 @@ Include this script in your svg file at the end as follows:
 5. open in a browser (tested using chromium and firefox and safari on iPad)
 6. click or tap to see the next slide (or use the keys above, or a presenter remote)
 
+## Sketch Deck skill
+
+This repository also distributes Sketch Deck, a Claude skill that grew out of
+this presenter. You sketch slides by hand on a zoomable canvas (pen, typed
+notes and reference images), and Claude reads the sketch and draws the
+finished slides into the same page, with build steps and a presenting mode.
+
+It runs on claude.ai artifacts: the canvas saves to the artifact's database,
+so it needs Claude with the Artifact tools. The helper scripts need Python 3
+with Playwright and Chromium.
+
+Install it in Claude Code from this repository's plugin marketplace:
+
+	/plugin marketplace add ako/inkscape-presenter
+	/plugin install sketch-deck@inkscape-presenter
+
+Then ask Claude for a new sketch deck. To use it in the Claude apps instead,
+zip the `plugins/sketch-deck/skills/sketch-deck` folder and upload it as a
+skill in the settings.
+
+The skill lives in `plugins/sketch-deck/skills/sketch-deck/`: `SKILL.md`, the
+page in `template/sketch-deck.html` and the scripts in `scripts/`.
+
+## License
+
+MIT, see [LICENSE](LICENSE). This covers the presenter and the Sketch Deck
+skill.
+
 ## Resources
 
 1. A todo list is available on Trello https://trello.com/board/inkscape-presenter/4f11dfe8e8a775991e2dd427
