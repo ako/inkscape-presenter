@@ -90,11 +90,7 @@
 			});
 		}
 
-		// set title and notes
-		if(top.setTitleAndNotes){
-	//		top.setTitleAndNotes(svgp.globals.slides[idx].title,svgp.globals.slides[idx].notes,idx + 1,svgp.globals.slideCount);
-		}
-
+		svgp.updateNotes();
 		svgp.showDrawingLayer('drawing-' + svgp.globals.slideIdx);
 	};
 
@@ -178,6 +174,7 @@
 		if (svgp.globals.stepIdx < svgp.globals.steps.length) {
 			svgp.globals.stepIdx++;
 			svgp.applySteps();
+			svgp.updateNotes();
 		} else {
 			svgp.nextSlide();
 		}
@@ -188,8 +185,17 @@
 		if (svgp.globals.stepIdx > 0) {
 			svgp.globals.stepIdx--;
 			svgp.applySteps();
+			svgp.updateNotes();
 		} else {
 			svgp.previousSlide();
+		}
+	};
+
+	// show the title, notes and slide / step counter in the page around the svg
+	svgp.updateNotes = function() {
+		var g = svgp.globals, slide = g.slides[g.slideIdx];
+		if (top.setTitleAndNotes) {
+			top.setTitleAndNotes(slide.title, slide.notes, g.slideIdx + 1, g.slideCount, g.stepIdx, g.steps.length);
 		}
 	};
 

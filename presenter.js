@@ -7,11 +7,13 @@ function toggleNotesMode(){
 		notesDiv.style.display = "block";
 	}
 }
-function setTitleAndNotes(title, notes,page,pages){
+// counter reads "slide/slides", plus " · step/steps" on slides with build steps
+function setTitleAndNotes(title, notes,page,pages,step,steps){
 	console.log("setTitleAndNotes: " + title + ", "+ notes);
 	document.getElementById("notesTitle").innerHTML = (title ? title : "");
 	document.getElementById("notesContent").innerHTML = (notes ? notes : "");
-	document.getElementById("pagecounter").innerHTML = page + "/" + pages;
+	document.getElementById("pagecounter").textContent = page + "/" + pages
+		+ (steps ? " \u00b7 " + step + "/" + steps : "");
 }
 function setUrlState(slideIdx,title){
 	console.log("setUrlState: " + slideIdx)
