@@ -15,5 +15,6 @@ div#notes { color: black;
 }
 div#notes h1 {margin: 1px; padding: 1px; font-size: 18px; }
 div#notes div {margin: 1px; padding: 1px; font-size: 14px; width: 90%; }
-span#pagecounter { position:fixed; top:0; right: 0; background-color: rgba(210,210,210,0.5); margin: 1px; padding: 1px;}
+span#pagecounter { position:fixed; z-index: 6; top:0; right: 0; font: 14px Helvetica, Arial, sans-serif; background-color: rgba(210,210,210,0.5); margin: 1px; padding: 1px;}
 
+span#pagecounter:empty { display: none; }
