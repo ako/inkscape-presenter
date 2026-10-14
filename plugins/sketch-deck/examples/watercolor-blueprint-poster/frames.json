@@ -1,0 +1,11 @@
+[
+{"op": "set", "collection": "frames", "doc_id": "wb-poster", "data": {"x": 0, "y": 0, "w": 4800, "h": 2700, "t": 1}},
+{"op": "set", "collection": "frames", "doc_id": "wb-1", "data": {"x": 200.0, "y": 1540.0, "w": 1920.0, "h": 1080.0, "t": 2}},
+{"op": "set", "collection": "frames", "doc_id": "wb-2", "data": {"x": 1600.0, "y": 1380.0, "w": 2160.0, "h": 1215.0, "t": 3}},
+{"op": "set", "collection": "frames", "doc_id": "wb-3", "data": {"x": 1600.0, "y": 960.0, "w": 2160.0, "h": 1215.0, "t": 4}},
+{"op": "set", "collection": "frames", "doc_id": "wb-4", "data": {"x": 1600.0, "y": 560.0, "w": 2160.0, "h": 1215.0, "t": 5}},
+{"op": "set", "collection": "frames", "doc_id": "wb-5", "data": {"x": 1600.0, "y": 180.0, "w": 2160.0, "h": 1215.0, "t": 6}},
+{"op": "set", "collection": "frames", "doc_id": "wb-6", "data": {"x": 3680.0, "y": 400.0, "w": 1080.0, "h": 607.5, "t": 7}},
+{"op": "set", "collection": "frames", "doc_id": "wb-7", "data": {"x": 3680.0, "y": 1400.0, "w": 1080.0, "h": 607.5, "t": 8}},
+{"op": "set", "collection": "meta", "doc_id": "settings", "data": {"cols": 4, "grid": false}}
+]

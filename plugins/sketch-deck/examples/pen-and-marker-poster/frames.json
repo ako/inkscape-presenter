@@ -1,0 +1,11 @@
+[
+{"op": "set", "collection": "frames", "doc_id": "pm-poster", "data": {"x": 0, "y": 0, "w": 8000, "h": 4500, "t": 10}},
+{"op": "set", "collection": "frames", "doc_id": "pm-1", "data": {"x": 400, "y": 1300, "w": 2100, "h": 1181, "t": 20}},
+{"op": "set", "collection": "frames", "doc_id": "pm-2", "data": {"x": 2950, "y": 1300, "w": 2100, "h": 1181, "t": 30}},
+{"op": "set", "collection": "frames", "doc_id": "pm-3", "data": {"x": 5500, "y": 1300, "w": 2100, "h": 1181, "t": 40}},
+{"op": "set", "collection": "frames", "doc_id": "pm-4", "data": {"x": 400, "y": 2950, "w": 2100, "h": 1181, "t": 50}},
+{"op": "set", "collection": "frames", "doc_id": "pm-5", "data": {"x": 2950, "y": 2950, "w": 2100, "h": 1181, "t": 60}},
+{"op": "set", "collection": "frames", "doc_id": "pm-6", "data": {"x": 5500, "y": 2950, "w": 2100, "h": 1181, "t": 70}},
+{"op": "set", "collection": "frames", "doc_id": "pm-recap", "data": {"x": 0, "y": 0, "w": 8000, "h": 4500, "t": 90}},
+{"op": "set", "collection": "meta", "doc_id": "settings", "data": {"cols": 4, "grid": false}}
+]

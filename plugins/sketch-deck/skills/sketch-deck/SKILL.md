@@ -66,15 +66,26 @@ Paths are relative to the directory of this SKILL.md.
   deck starts as a copy of it.
 - `scripts/sketch_render.py`: renders a database export to PNGs and a
   manifest.
-- `scripts/slide_kit.py`: draws finished slides into a deck page.
+- `scripts/slide_kit.py`: draws finished slides in the house style, and
+  holds what every style shares: `inject` (writes the clean layer) and
+  `theme_page` (title, Google Fonts and page colours for a new deck).
+- `scripts/blueprint_kit.py`, `scripts/watercolor_blueprint.py`,
+  `scripts/pen_marker.py`: the kits of the named styles (see "Styles").
+- `styles/*.md`: how to draw in each named style. Read one only when that
+  style is used.
 
-Copy both scripts into the working directory before using them; deck
-scripts import `slide_kit`.
+Copy the scripts you need into the working directory before using them; the
+style kits and deck scripts import `slide_kit`. Worked examples, one poster
+per style that explains this skill, are in the plugin's `examples/` folder
+next to `skills/`.
 
 ## 1. New deck
 
 1. Copy `template/sketch-deck.html` to `<deck-slug>.html` in the working
-   directory, and set its `<title>` to the talk's name (2-4 words).
+   directory, and set its `<title>` to the talk's name (2-4 words). For a
+   named style, run its kit's `theme_page("<deck-slug>.html", title)`
+   instead: it sets the title and adds the style's fonts and page colours,
+   which must be in place before the first publish.
 2. Publish it as a NEW artifact: that `file_path`,
    `capabilities: {"db": {}, "assets": {}, "downloads": true}`,
    `icon: "pencil"`, a one-line `description`. Each deck gets its own empty
@@ -155,6 +166,48 @@ next "updated" can start from it.
 - If the user names another design system for a talk, keep the structure
   and swap the tokens and fonts.
 
+## Styles
+
+The house style above is the default. When the user names one of these
+styles (or asks for "the same style as" a deck made with it), read its file
+and use its kit instead of `slide_kit.slide()`. The 1679.2 x 944.5 slide
+space, `data-frame` groups, `step()` and stable step keys stay the same.
+
+| Style | Use it for | Instructions | Kit |
+|---|---|---|---|
+| Blueprint | an engineering drawing: light outlines and amber on a dark navy grid | `styles/blueprint.md` | `scripts/blueprint_kit.py` |
+| Watercolor Blueprint | an exploded technical plate in ink and grey-blue watercolour on cream paper | `styles/watercolor-blueprint.md` | `scripts/watercolor_blueprint.py` |
+| Pen & Marker | a designer's marker rendering: wobbly fineliner, streaky marker fills, highlighter swipes | `styles/pen-and-marker.md` | `scripts/pen_marker.py` |
+
+Every kit has `theme_page(html, title)` for step 1 and `inject(html,
+groups)` for the clean layer, and draws plain SVG strings. A style's fonts
+come from the page's Google Fonts link, which `theme_page` extends, so the
+page and its downloads load them.
+
+## Poster decks
+
+All three named styles also suit a poster: one large overview frame that
+holds the whole story, with smaller frames nested in it that become their
+own slides, so presenting zooms from the overview into each part. Use it
+when the user asks for a poster, an overview to zoom into, or "Prezi".
+
+- The poster frame comes first in the slide order, the nested frames follow
+  in reading order, and an optional recap frame equal to the poster ends the
+  deck. Each style file gives its poster sizes and how its parts are drawn.
+- With no sketch to take frames from, write the frames to the deck's
+  database yourself: one `ArtifactData` `batch` of `set` writes to `frames`
+  (`t` sets the order; steps of 10 leave room to insert), and set
+  `meta/settings` to `{"cols": 4, "grid": false}` so nothing re-flows. Tell
+  the user not to press Tidy, which would lay the frames out in a grid.
+- The page scales every clean group from 1679.2 units onto its frame. A
+  poster drawn in a larger space needs an inner `scale(1679.2 / width)`
+  group; the kits' poster helpers add it.
+- Give every nested frame a `<g data-frame data-title>` group, empty if the
+  poster already draws its content, so the Slides panel and the downloads
+  name it ("Empty slide" otherwise).
+- Use no build steps in a poster deck: steps hide content on every slide at
+  or after the current one, so nested slides would show blanks.
+
 ## 5. Check, publish, report
 
 1. One look: open the page with Playwright at 1600x1000, hide `#hint`, set
@@ -198,7 +251,9 @@ When the user asks for a new feature or a fix in how the page works:
 5. So new decks get the change too, update `template/sketch-deck.html` from
    the new page: empty the clean layer to `<g id="clean"></g>` and set
    `<title>Sketch Deck</title>`. Update the scripts the same way when they
-   change. An installed plugin's copy is replaced on its next update, so
+   change. A style kit's `theme_page` swaps fixed bits of the page's text and
+   stops when one no longer matches; update its swaps with the page. Rebuild
+   the examples (`python3 examples/build.py`) to check the kits still work. An installed plugin's copy is replaced on its next update, so
    make lasting changes in the skill's source repository and offer the user
    the updated files if you can't write there.
 6. If the change affects how Claude reads or draws decks, update this skill.

@@ -26,6 +26,12 @@ The downloaded presentation is one file that works without claude.ai. Its
 slide navigator (S) lets you hide and reorder slides for an audience, and
 save that version as its own file.
 
+Claude draws in a clean house style by default, or in one of three named
+styles: **Blueprint** (an engineering drawing on a navy grid), **Watercolor
+Blueprint** (an exploded technical plate in ink and watercolour) and **Pen &
+Marker** (a designer's marker rendering). Each suits a slide deck or a
+poster you zoom into.
+
 ### Install
 
 Sketch Deck runs on claude.ai artifacts: the canvas saves to the artifact's
@@ -47,8 +53,11 @@ skill in the settings.
   Claude how to run it, `template/sketch-deck.html` is the canvas page every
   deck starts from, and `scripts/` holds the helpers that render a sketch for
   Claude and draw the finished slides.
-* `plugins/sketch-deck/examples/sketch-deck-example/`: an example deck, as a
-  standalone presentation, an Inkscape SVG and its sketch data.
+* `plugins/sketch-deck/skills/sketch-deck/styles/`: how Claude draws in each
+  named style; the matching kits are in `scripts/`.
+* `plugins/sketch-deck/examples/`: a poster explaining Sketch Deck in each of
+  the three styles, and a hand-drawn example deck, each as a standalone
+  presentation and an Inkscape SVG.
 
 ## How Inkscape presenter fits in
 
