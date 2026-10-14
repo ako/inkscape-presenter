@@ -85,11 +85,39 @@ DEFS = f'''<defs>
 <marker id="ah-i" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="{INK}"/></marker>
 <marker id="ah-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="{AMB}"/></marker></defs>'''
 
-def inject(html_path, groups):
-    """Replace the page's clean layer with DEFS + the given slide groups."""
+def inject(html_path, groups, defs=DEFS):
+    """Replace the page's clean layer with defs + the given slide groups."""
     s = open(html_path).read()
     i = s.index('<g id="clean">'); j = s.index('<g id="images">')
-    s = s[:i] + '<g id="clean">\n' + DEFS + "\n".join(groups) + '\n    </g>\n    ' + s[j:]
+    s = s[:i] + '<g id="clean">\n' + defs + "\n".join(groups) + '\n    </g>\n    ' + s[j:]
+    open(html_path, 'w').write(s)
+
+
+# ---- page theming, shared by the style kits ----
+
+FONTS_LINK = 'https://fonts.googleapis.com/css2?'
+
+def theme_page(html_path, title, fonts=(), swaps=()):
+    """Prepare a fresh copy of the template for a deck: set its <title>, add
+    Google Fonts families (css2 'family=' values such as 'Kalam:wght@400;700')
+    so the page and its downloads load them, and apply (old, new) text swaps
+    that recolour the page. Safe to run twice. Stops with an error when the
+    template no longer contains a swap's text: fix the swap, don't skip it."""
+    s = open(html_path).read()
+    s = re.sub(r'<title>.*?</title>', lambda m: f'<title>{E(title)}</title>', s, count=1, flags=re.S)
+    i = s.index(FONTS_LINK) + len(FONTS_LINK)
+    j = s.index('"', i)
+    link = s[i:j]
+    for f in fonts:
+        if 'family=' + f.replace(' ', '+') not in link.replace('&amp;', '&'):
+            link = 'family=' + f.replace(' ', '+') + '&' + link
+    s = s[:i] + link + s[j:]
+    for old, new in swaps:
+        if new in s:
+            continue
+        if old not in s:
+            raise SystemExit(f"theme_page: template no longer contains {old!r}")
+        s = s.replace(old, new)
     open(html_path, 'w').write(s)
 
 def frames_from_manifest(path):
