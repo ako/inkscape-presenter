@@ -157,8 +157,8 @@ body.present .stroke.note,body.present .tnote.note,body.present #images,body.pre
     </pattern>
   </defs>
   <g id="camera">
-    <rect x="0" y="0" width="8000" height="4500" fill="#eceee9"/>
-    <rect x="0" y="0" width="8000" height="4500" fill="url(#grid)"/>
+    <rect id="sheetBg" x="0" y="0" width="8000" height="4500" fill="#eceee9"/>
+    <rect id="sheetGrid" x="0" y="0" width="8000" height="4500" fill="url(#grid)"/>
     <!-- Claude's finished visuals: one <g data-frame="frameId"> per frame -->
     <g id="clean"></g>
     <g id="images"></g>
@@ -399,6 +399,7 @@ function removeImage(id){ const m = images.get(id); if (m){ m.el.remove(); image
 function removeText(id){ const x = texts.get(id); if (x){ x.el.remove(); texts.delete(id); } sel.texts.delete(id); }
 const textData = x => withL({ x: x.x, y: x.y, w: x.w, fs: x.fs, text: x.text, c: x.c, t: x.t }, x.L);
 function drawFrames(){
+  syncSheet();
   framesG.replaceChildren();
   frameList().forEach((f, i) => {
     const r = document.createElementNS(NS, 'rect');
@@ -426,6 +427,7 @@ function syncClean(){
 
 /* ---------------- persistence ---------------- */
 function setStatus(){
+  syncSheet();
   const el = $('status');
   el.classList.toggle('warn', !db || readOnly);
   const counts = `${strokes.size} stroke${strokes.size === 1 ? '' : 's'} · ${texts.size} text${texts.size === 1 ? '' : 's'} · ${images.size ? images.size + ' image' + (images.size === 1 ? '' : 's') + ' · ' : ''}${frames.size} frame${frames.size === 1 ? '' : 's'}`;
@@ -1422,6 +1424,20 @@ function contentBox(){
   strokes.forEach(s => { for (let i = 0; i < s.p.length; i += 2) add(s.p[i], s.p[i+1]); });
   return x0 === Infinity ? null : { x: x0, y: y0, w: Math.max(400, x1 - x0), h: Math.max(225, y1 - y0) };
 }
+// the paper grows to cover everything on the canvas (never smaller than the default sheet)
+var sheetRaf = 0;
+function syncSheet(){
+  if (sheetRaf) return;
+  sheetRaf = requestAnimationFrame(() => {
+    sheetRaf = 0;
+    const b = contentBox(), m = 500, g = 250;
+    let x0 = SHEET.x, y0 = SHEET.y, x1 = SHEET.x + SHEET.w, y1 = SHEET.y + SHEET.h;
+    if (b){ x0 = Math.min(x0, Math.floor((b.x - m) / g) * g); y0 = Math.min(y0, Math.floor((b.y - m) / g) * g);
+            x1 = Math.max(x1, Math.ceil((b.x + b.w + m) / g) * g); y1 = Math.max(y1, Math.ceil((b.y + b.h + m) / g) * g); }
+    ['sheetBg', 'sheetGrid'].forEach(id => { const r = $(id); if (!r) return;
+      r.setAttribute('x', x0); r.setAttribute('y', y0); r.setAttribute('width', x1 - x0); r.setAttribute('height', y1 - y0); });
+  });
+}
 function fitAll(instant){ const b = contentBox(); flyTo(b ? fitRect(b, 0.85) : { x: 1800, y: 1000, w: 3600 }, instant); }
 
 function updateCount(){
@@ -1679,7 +1695,7 @@ function sketchDeckPlayer(){
   /* ---- navigation over the shown slides ---- */
   function showHud(){
     hud.classList.remove('idle'); clearTimeout(hudTimer);
-    hudTimer = setTimeout(function(){ if (nav.hidden) hud.classList.add('idle'); }, 2500);
+    hudTimer = setTimeout(function(){ if (nav.hidden && !userView) hud.classList.add('idle'); }, 3000);
   }
   function apply(){
     slides.forEach(function(s){
@@ -1694,12 +1710,13 @@ function sketchDeckPlayer(){
   }
   function go(i, atEnd, instant){
     if (!seq.length){ apply(); return; }
+    if (userView) setUser(false);
     pos = Math.max(0, Math.min(seq.length - 1, i));
     step = atEnd ? seq[pos].steps.length : 0;
     apply(); fly(frameView(seq[pos]), instant);
   }
-  function next(){ if (!seq.length) return; if (step < seq[pos].steps.length){ step++; apply(); } else if (pos < seq.length - 1) go(pos + 1); }
-  function prev(){ if (!seq.length) return; if (step > 0){ step--; apply(); } else if (pos > 0) go(pos - 1, true); }
+  function next(){ if (!seq.length) return; if (userView){ backToSlide(); return; } if (step < seq[pos].steps.length){ step++; apply(); } else if (pos < seq.length - 1) go(pos + 1); }
+  function prev(){ if (!seq.length) return; if (userView){ backToSlide(); return; } if (step > 0){ step--; apply(); } else if (pos > 0) go(pos - 1, true); }
   function fullscreen(){
     var d = document;
     if (d.fullscreenElement){ if (d.exitFullscreen) d.exitFullscreen(); return; }
@@ -1726,18 +1743,24 @@ function sketchDeckPlayer(){
 
   /* ---- slide navigator ---- */
   var thumbs = {}, dragId = null;
-  // a picture of the whole slide, steps included
+  // a picture of the whole slide, steps included, with every slide that
+  // shows in its view drawn too (largest first): a poster behind its zoom
+  // frames, and the panels on top of a poster
   function thumb(s){
     if (thumbs[s.id]) return thumbs[s.id];
     var t = document.createElementNS(NS, 'svg');
     t.setAttribute('viewBox', [s.x, s.y, s.w, s.h].join(' '));
     t.setAttribute('class', 'thumb'); t.setAttribute('aria-hidden', 'true');
-    var c = s.g.cloneNode(true);
-    [c].concat([].slice.call(c.querySelectorAll('*'))).forEach(function(n){
-      n.removeAttribute('id'); n.removeAttribute('data-sd-slide'); n.removeAttribute('data-sd-step');
-      if (n.classList) n.classList.remove('sd-hidden');
-    });
-    t.appendChild(c);
+    slides.filter(function(o){ return o.x < s.x + s.w && o.x + o.w > s.x && o.y < s.y + s.h && o.y + o.h > s.y; })
+      .sort(function(a, b){ return b.w * b.h - a.w * a.h || (a === s ? 1 : b === s ? -1 : 0); })
+      .forEach(function(o){
+        var c = o.g.cloneNode(true);
+        [c].concat([].slice.call(c.querySelectorAll('*'))).forEach(function(n){
+          n.removeAttribute('id'); n.removeAttribute('data-sd-slide'); n.removeAttribute('data-sd-step');
+          if (n.classList) n.classList.remove('sd-hidden');
+        });
+        t.appendChild(c);
+      });
     return thumbs[s.id] = t;
   }
   function el(tag, attrs, kids){
@@ -1831,10 +1854,52 @@ function sketchDeckPlayer(){
   };
   $('navSave').onclick = saveCopy;
 
+
+  /* ---- zoom, pan and overview ---- */
+  var userView = false, overview = false, pts = {}, pinch = null, drag = null;
+  function scale(){ var m = svg.getScreenCTM(); return m ? m.a : 1; }
+  function toWorld(cx, cy){ var m = svg.getScreenCTM(); if (!m) return { x: cam.x + cam.w / 2, y: cam.y + cam.h / 2 }; var p = svg.createSVGPoint(); p.x = cx; p.y = cy; p = p.matrixTransform(m.inverse()); return { x: p.x, y: p.y }; }
+  function setUser(on){ userView = on; document.body.classList.toggle('sd-user', on); if (!on) overview = false; showHud(); }
+  function zoomAt(cx, cy, k){
+    if (!cam) return;
+    cancelAnimationFrame(raf);
+    var w = toWorld(cx, cy), nw = Math.max(40, Math.min(200000, cam.w * k)); k = nw / cam.w;
+    setCam({ x: w.x - (w.x - cam.x) * k, y: w.y - (w.y - cam.y) * k, w: cam.w * k, h: cam.h * k });
+    setUser(true);
+  }
+  function panBy(dx, dy){ if (!cam) return; cancelAnimationFrame(raf); var s = scale(); setCam({ x: cam.x - dx / s, y: cam.y - dy / s, w: cam.w, h: cam.h }); setUser(true); }
+  function zoomCenter(k){ zoomAt(innerWidth / 2, innerHeight / 2, k); }
+  function backToSlide(){ if (!seq.length) return; setUser(false); apply(); fly(frameView(seq[pos])); }
+  function showOverview(){
+    if (!seq.length) return;
+    if (overview){ backToSlide(); return; }
+    var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    seq.forEach(function(s){ x0 = Math.min(x0, s.x); y0 = Math.min(y0, s.y); x1 = Math.max(x1, s.x + s.w); y1 = Math.max(y1, s.y + s.h); });
+    var pad = (x1 - x0) * 0.03;
+    slides.forEach(function(s){ var on = seq.indexOf(s) >= 0; s.steps.forEach(function(g){ g.classList.toggle('sd-hidden', !on); }); });
+    setUser(true); overview = true;
+    fly({ x: x0 - pad, y: y0 - pad, w: x1 - x0 + 2 * pad, h: y1 - y0 + 2 * pad });
+  }
+  function slideAt(cx, cy){ var w = toWorld(cx, cy), hit = -1; seq.forEach(function(s, i){ if (w.x >= s.x && w.x <= s.x + s.w && w.y >= s.y && w.y <= s.y + s.h) hit = i; }); return hit; }
+  svg.addEventListener('wheel', function(e){
+    e.preventDefault();
+    var d = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+    if (e.ctrlKey) zoomAt(e.clientX, e.clientY, Math.exp(d * 0.01));
+    else if (userView && Math.abs(e.deltaX) >= 1) panBy(-e.deltaX, -d);
+    else zoomAt(e.clientX, e.clientY, Math.exp(d * 0.0015));
+  }, { passive: false });
+  $('zIn').onclick = function(){ zoomCenter(0.8); };
+  $('zOut').onclick = function(){ zoomCenter(1.25); };
+  $('zFit').onclick = backToSlide;
+  $('zAll').onclick = showOverview;
+  $('fsBtn').onclick = fullscreen;
+
   /* ---- input ---- */
   var keys = { ArrowRight: next, ArrowDown: next, PageDown: next, ' ': next, Enter: next, ArrowLeft: prev, ArrowUp: prev, PageUp: prev, Backspace: prev,
     Home: function(){ go(0); }, End: function(){ go(seq.length - 1, true); }, f: fullscreen, F: fullscreen,
-    s: function(){ toggleNav(); }, S: function(){ toggleNav(); } };
+    s: function(){ toggleNav(); }, S: function(){ toggleNav(); },
+    '+': function(){ zoomCenter(0.8); }, '=': function(){ zoomCenter(0.8); }, '-': function(){ zoomCenter(1.25); }, '_': function(){ zoomCenter(1.25); },
+    '0': backToSlide, o: showOverview, O: showOverview };
   addEventListener('keydown', function(e){
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.key === 'Escape' && !nav.hidden){ e.preventDefault(); toggleNav(false); $('navBtn').focus(); return; }
@@ -1846,13 +1911,43 @@ function sketchDeckPlayer(){
     if (k){ e.preventDefault(); k(); }
   });
   var down = null;
-  svg.addEventListener('pointerdown', function(e){ if (e.isPrimary) down = { x: e.clientX, y: e.clientY }; });
-  svg.addEventListener('pointerup', function(e){
-    if (!down) return;
-    var dx = e.clientX - down.x, dy = e.clientY - down.y; down = null;
+  function pinchState(){ var p = Object.keys(pts).map(function(k){ return pts[k]; }); if (p.length < 2) return null; var a = p[0], b = p[1]; return { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
+  svg.addEventListener('pointerdown', function(e){
+    showHud();
+    pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+    try { svg.setPointerCapture(e.pointerId); } catch (x) {}
+    if (Object.keys(pts).length >= 2){ pinch = pinchState(); down = null; drag = null; return; }
+    down = { x: e.clientX, y: e.clientY, moved: false };
+    drag = { x: e.clientX, y: e.clientY };
+  });
+  svg.addEventListener('pointermove', function(e){
+    if (!pts[e.pointerId]) return;
+    pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+    if (pinch){
+      var p = pinchState(); if (!p) return;
+      zoomAt(p.x, p.y, pinch.d / p.d); panBy(p.x - pinch.x, p.y - pinch.y); pinch = p; return;
+    }
+    if (drag && userView){
+      panBy(e.clientX - drag.x, e.clientY - drag.y); drag = { x: e.clientX, y: e.clientY };
+      if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) down.moved = true;
+    }
+  });
+  function lift(e){
+    delete pts[e.pointerId];
+    if (pinch){ if (Object.keys(pts).length < 2) pinch = null; down = null; drag = null; return; }
+    drag = null;
+    if (!down || e.type === 'pointercancel'){ down = null; return; }
+    var dx = e.clientX - down.x, dy = e.clientY - down.y, moved = down.moved; down = null;
+    if (userView){
+      if (!moved && Math.abs(dx) < 8 && Math.abs(dy) < 8 && overview){ var i = slideAt(e.clientX, e.clientY); if (i >= 0){ setUser(false); go(i); } }
+      return;
+    }
     if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) (dx < 0 ? next : prev)();
     else if (Math.abs(dx) < 8 && Math.abs(dy) < 8) (e.clientX < innerWidth / 2 ? prev : next)();
-  });
+  }
+  svg.addEventListener('pointerup', lift);
+  svg.addEventListener('pointercancel', lift);
+  svg.addEventListener('dblclick', function(e){ if (userView) backToSlide(); else zoomAt(e.clientX, e.clientY, 0.5); });
   addEventListener('mousemove', showHud);
 
   rebuild();
@@ -1869,6 +1964,7 @@ const PLAYER_CSS = 'html,body{margin:0;height:100%;overflow:hidden;background:#1
   + '#hud{position:fixed;right:16px;bottom:16px;display:flex;align-items:center;gap:6px;font:13px "IBM Plex Mono",Menlo,monospace;color:#e0a106;'
   + 'background:rgba(22,26,30,.9);border:1px solid rgba(236,238,233,.14);border-radius:999px;padding:4px 11px 4px 4px;transition:opacity .4s}'
   + '#hud.idle{opacity:0;pointer-events:none}'
+  + '#hud .zg{display:inline-flex;gap:2px}#hud .zb{min-width:30px;padding:4px 8px}body.sd-user #deck{cursor:grab}body.sd-user #deck:active{cursor:grabbing}'
   + '#hud button,#nav button{font:500 13px "IBM Plex Sans",Arial,sans-serif;color:#e6e9e4;background:transparent;border:1px solid rgba(236,238,233,.14);border-radius:999px;padding:4px 10px;cursor:pointer}'
   + '#hud button:hover,#nav button:hover{background:rgba(236,238,233,.08)}'
   + '#hud button:focus-visible,#nav button:focus-visible,#nav input:focus-visible,#navList li:focus-visible{outline:2px solid #e0a106;outline-offset:1px}'
@@ -1896,10 +1992,13 @@ const PLAYER_CSS = 'html,body{margin:0;height:100%;overflow:hidden;background:#1
   + 'border:1px solid rgba(236,238,233,.14);border-radius:7px;padding:6px 8px}';
 
 const PLAYER_HTML = '<div id="hud"><button id="navBtn" aria-expanded="false" aria-controls="nav" title="Slides: show, hide and reorder (S)">Slides</button>'
+  + '<button id="zAll" title="Overview of all slides (O); click a slide to go there">Overview</button>'
+  + '<span class="zg"><button id="zOut" class="zb" aria-label="Zoom out" title="Zoom out (−)">−</button><button id="zFit" class="zb" aria-label="Back to the slide" title="Back to the slide (0)">⤢</button><button id="zIn" class="zb" aria-label="Zoom in" title="Zoom in (+)">+</button></span>'
+  + '<button id="fsBtn" class="zb" aria-label="Full screen" title="Full screen (F)">⛶</button>'
   + '<span id="count" aria-live="polite"></span></div>'
   + '<aside id="nav" hidden aria-label="Slides">'
   + '<header><h2>Slides</h2><span id="navSub"></span><button id="navClose" class="ib" aria-label="Close slides">×</button></header>'
-  + '<p class="help">Untick a slide to skip it, drag or use the arrows to reorder. Changes stay in this browser; save a copy to keep this version as its own file.</p>'
+  + '<p class="help">Untick a slide to skip it, drag or use the arrows to reorder. Changes stay in this browser; save a copy to keep this version as its own file. Scroll or pinch to zoom, drag to pan, O for an overview, 0 to return.</p>'
   + '<ol id="navList"></ol>'
   + '<footer><input id="navName" type="text" placeholder="Name for this version, e.g. Board meeting" aria-label="Name for this version">'
   + '<button id="navSave">Save copy</button><button id="navAll">Show all</button><button id="navReset" title="Back to this file’s own order">Reset</button></footer>'
@@ -2041,4 +2140,5 @@ flyTo({ x: 1800, y: 1000, w: 3600 }, true);
 setStatus();
 })();
 </script>
+
 
