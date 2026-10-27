@@ -20,6 +20,9 @@ Keys must be unique within a slide; keep them stable across redraws so the
 user's ordering and names survive.
 
 frame is (frame_id, x, y, w, h) from the manifest written by sketch_render.py.
+The user can edit the text of a finished slide in the page; inject() keys every
+<text> and <tspan> with data-tid for that. Before redrawing, bake their edits into
+the deck script (see SKILL.md, "4. Draw").
 CSS classes available on the page: d (Unbounded 700), d5 (Unbounded 500),
 b (IBM Plex Sans), m (IBM Plex Mono).
 """
@@ -85,11 +88,28 @@ DEFS = f'''<defs>
 <marker id="ah-i" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="{INK}"/></marker>
 <marker id="ah-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="{AMB}"/></marker></defs>'''
 
+_TEXT_TAG = re.compile(r'<(text|tspan)((?:[\s/][^>]*)?)>')
+
+def number_text(svg):
+    """Give every <text> and <tspan> of one slide a data-tid (t1, t2, ... in document
+    order) unless it has one. The page keys the user's text edits by it, and gives
+    slides without them the same numbers when it loads."""
+    n = 0
+    def sub(m):
+        nonlocal n
+        n += 1
+        if 'data-tid=' in m.group(2):
+            return m.group(0)
+        return f'<{m.group(1)} data-tid="t{n}"{m.group(2)}>'
+    return _TEXT_TAG.sub(sub, svg)
+
+
 def inject(html_path, groups, defs=DEFS):
-    """Replace the page's clean layer with defs + the given slide groups."""
+    """Replace the page's clean layer with defs + the given slide groups (one string per
+    slide); every kit writes its slides through here, so their text gets data-tid keys."""
     s = open(html_path).read()
     i = s.index('<g id="clean">'); j = s.index('<g id="images">')
-    s = s[:i] + '<g id="clean">\n' + defs + "\n".join(groups) + '\n    </g>\n    ' + s[j:]
+    s = s[:i] + '<g id="clean">\n' + defs + "\n".join(number_text(g) for g in groups) + '\n    </g>\n    ' + s[j:]
     open(html_path, 'w').write(s)
 
 

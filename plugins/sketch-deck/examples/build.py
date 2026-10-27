@@ -13,10 +13,14 @@ writes, next to deck.py:
   frames.json        ArtifactData batch writes that load the frames into a
                      real deck's database (with the grid turned off)
 
+Both downloads embed their fonts, so the build needs a connection to Google
+Fonts; it fetches them from Python, which follows the system's proxy and CA
+settings.
+
 Needs Python 3 with Playwright and Chromium. Set CHROMIUM to a Chromium
 binary if Playwright's own download is missing.
 """
-import importlib.util, json, os, shutil, sys, tempfile
+import importlib.util, json, os, shutil, ssl, sys, tempfile, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKILL = os.path.join(HERE, '..', 'skills', 'sketch-deck')
@@ -25,7 +29,18 @@ sys.path.insert(0, os.path.join(SKILL, 'scripts'))
 
 # expose the export functions to this builder only, in the temporary copy
 HOOK = ('resize();\nsyncClean();',
-        'window.__build = { frames, drawFrames, setView, buildExportHtml, buildExportSvg };\nresize();\nsyncClean();')
+        'window.__build = { frames, drawFrames, setView, buildDownload };\nresize();\nsyncClean();')
+
+
+def fetch_font(route):
+    """Fetch Google Fonts from Python, so the build honours the system's proxy and CA settings."""
+    try:
+        ctx = ssl.create_default_context(cafile=os.environ.get('SSL_CERT_FILE') or None)
+        with urllib.request.urlopen(urllib.request.Request(route.request.url, headers={'User-Agent': route.request.headers.get('user-agent', '')}),
+                                    timeout=30, context=ctx) as r:
+            route.fulfill(status=r.status, body=r.read(), headers={'content-type': r.headers.get('content-type', ''), 'access-control-allow-origin': '*'})
+    except Exception:
+        route.abort()
 
 
 def build(example):
@@ -46,18 +61,22 @@ def build(example):
         exe = os.environ.get('CHROMIUM')
         b = p.chromium.launch(executable_path=exe) if exe else p.chromium.launch()
         pg = b.new_page()
+        pg.route('https://fonts.googleapis.com/**', fetch_font)
+        pg.route('https://fonts.gstatic.com/**', fetch_font)
         errors = []
         pg.on('pageerror', lambda e: errors.append(str(e)))
         pg.goto('file://' + page)
         pg.wait_for_timeout(300)
-        out = pg.evaluate('''fr => {
+        out = pg.evaluate('''async fr => {
             const t = window.__build;
             fr.forEach(([id, x, y, w, h, n]) => t.frames.set(id, { x, y, w, h, t: n }));
             t.drawFrames(); t.setView('clean');
-            return { html: t.buildExportHtml(),
-                     svg: '<?xml version="1.0" encoding="UTF-8"?>\\n' + new XMLSerializer().serializeToString(t.buildExportSvg()) + '\\n' };
+            const html = await t.buildDownload('html'), svg = await t.buildDownload('svg');
+            return { html: html.text, svg: svg.text, missing: html.failedImages + html.failedFonts + svg.failedImages + svg.failedFonts };
         }''', [list(f) for f in frames])
         b.close()
+    if out['missing']:
+        raise SystemExit(f'{out["missing"]} images or fonts could not be embedded (needs a connection to Google Fonts)')
     if errors:
         raise SystemExit('page errors: ' + '; '.join(errors))
     open(os.path.join(example, 'presentation.html'), 'w').write(out['html'])

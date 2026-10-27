@@ -11,7 +11,7 @@
       "name": "sketch-deck",
       "source": "./plugins/sketch-deck",
       "description": "Sketch slides by hand on a zoomable canvas artifact; Claude draws the finished slides into the same page.",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "license": "MIT"
     }
   ]

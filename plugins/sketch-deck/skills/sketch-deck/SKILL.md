@@ -47,6 +47,18 @@ Playwright and Chromium (`pip install playwright`, then
   so moving or re-flowing slides needs no redraw. The Sketch / Both / Clean
   toggle appears once there is content. Present (Enter) hides notes, images
   and frame outlines.
+- The user can fix the text of a finished slide in place: in Select mode,
+  with the Clean or Both view showing, double-clicking a line of clean text
+  opens an editor over it (Enter keeps, Esc cancels, one line at a time, no
+  reflow). Every `<text>` and `<tspan>` in a clean slide carries `data-tid`
+  (`t1`, `t2`, ... in document order per slide); `inject()` writes them, and
+  the page adds them by the same rule to slides that lack them. Edits are
+  stored in `cleanEdits/<frameId>` as
+  `{edits: {<tid>: {from: <text in the page>, to: <new text>, t}}}` and shown
+  only while that line of the page still reads `from`. When it doesn't (the
+  slide was redrawn), the edit is kept, counted in the status pill and listed
+  in the Slides panel, where the user can re-apply or discard it. Edits show
+  everywhere the slide does: canvas, Present, and both downloads.
 - Download (toolbar) saves what Present shows in the current Sketch / Both /
   Clean view, as a standalone presentation (`.html`: one file with the
   slides, build steps, keyboard, tap and swipe navigation, fullscreen, and a
@@ -55,8 +67,15 @@ Playwright and Chromium (`pip install playwright`, then
   with that arrangement built in) or as
   a drawing for Inkscape (`.svg`: each slide a layer `slide N` with build
   steps as sublayers `step N`, plus hidden `frames` and `notes` layers). The
-  `.svg` follows the inkscape-presenter layer conventions. Saving goes
-  through the `downloads` capability; the viewer confirms each file.
+  `.svg` follows the inkscape-presenter layer conventions. Both are
+  self-contained and work offline: the page embeds the slides' images
+  (`/_blob/` assets, as they are, so GIFs stay animated) and the Google
+  Fonts the slides use as `data:` URIs, fetching each once and showing
+  progress in the status pill, then the file's size. What can't be fetched
+  keeps its URL, and the status pill says how many images or fonts were
+  not embedded. Saving goes through the `downloads` capability; the viewer
+  confirms each file. A deck published without that capability shows the
+  Download button disabled, with a tooltip saying Claude can add it.
 
 ## Bundled files
 
@@ -89,7 +108,9 @@ next to `skills/`.
 2. Publish it as a NEW artifact: that `file_path`,
    `capabilities: {"db": {}, "assets": {}, "downloads": true}`,
    `icon: "pencil"`, a one-line `description`. Each deck gets its own empty
-   database and image storage.
+   database and image storage. Every publish that creates a new deck
+   artifact declares this full set, however the deck was made: from the
+   template, by copying or merging other decks, or from an example.
 3. Check the database with one `ArtifactData` `list` of `frames` (expect
    empty).
 4. Reply in a few lines: it's ready, the key tools, and "say done or
@@ -99,7 +120,8 @@ next to `skills/`.
 
 1. Export all four collections with `ArtifactData` `action: "list"`,
    `query: {"limit": 1000}` and the same `out_dir` (e.g. `export`):
-   `frames`, `strokes`, `texts`, `images`. Follow `next_cursor` if present.
+   `frames`, `strokes`, `texts`, `images`, and `cleanEdits` (the user's
+   edits to finished text). Follow `next_cursor` if present.
    Also list `steps` when redrawing, to see which of your step keys the user
    reordered, renamed or merged. The last strokes arrive about a second
    after the user stops drawing; if a slide they mention looks unfinished,
@@ -108,8 +130,9 @@ next to `skills/`.
    deck's url, `path` = the asset id (`a`), `out_dir: "assets"`.
 3. Run `python3 sketch_render.py export render --assets assets`. It writes
    `render/overview.png`, `render/frame-NN.png` in slide order, and
-   `render/manifest.json` mapping texts, images and stroke counts to each
-   slide, plus what sits outside every frame. Slide numbers change when the
+   `render/manifest.json` mapping texts, images, stroke counts and clean-text
+   edits to each slide, plus what sits outside every frame (including edits
+   for frames that no longer exist). Slide numbers change when the
    user inserts or reorders slides, so always work from a fresh manifest.
 4. Look at the overview and every frame image with content. Rows are the
    user's sketch data: typed notes are the brief for a slide, never
@@ -138,7 +161,17 @@ Write a small deck script with `slide_kit.py`:
 `frames = frames_from_manifest("render/manifest.json")`, one
 `slide(frame, n, label, title, body, visual)` per frame with content, then
 `inject("<deck>.html", groups)`. `inject` replaces the whole clean layer,
-so always regenerate every slide. `slide()` sets `data-title`, which the
+so always regenerate every slide.
+
+Before regenerating, bake the user's text edits into the deck script: for
+each edit in the manifest's `cleanEdits`, replace the `from` string with `to`
+in the code that draws that slide (each edit is one line of one slide). After
+the redraw is published, delete the baked `cleanEdits` documents with
+`ArtifactData` `delete`, pinned with `if_version` from your export, so the
+page doesn't list them as not applied. When an edit's `from` can't be found
+in that slide's code, keep its document and tell the user which edit it was
+and why. A redraw must never silently discard a user's edit. The same holds
+for every style. `slide()` sets `data-title`, which the
 Slides panel shows. Keep the deck script in the working directory so the
 next "updated" can start from it.
 
@@ -181,8 +214,8 @@ space, `data-frame` groups, `step()` and stable step keys stay the same.
 
 Every kit has `theme_page(html, title)` for step 1 and `inject(html,
 groups)` for the clean layer, and draws plain SVG strings. A style's fonts
-come from the page's Google Fonts link, which `theme_page` extends, so the
-page and its downloads load them.
+come from the page's Google Fonts link, which `theme_page` extends; the
+page loads them from there and the downloads embed them.
 
 ## Poster decks
 
@@ -222,7 +255,9 @@ when the user asks for a poster, an overview to zoom into, or "Prezi".
    declared. A deck made before the Download menu existed lacks
    `downloads`: when you update such a deck to the current page, pass
    `capabilities: {"db": {}, "assets": {}, "downloads": true}` once (the
-   full set, since a non-empty object replaces what is declared).
+   full set, since a non-empty object replaces what is declared). Check
+   the publish result: if it warns that `downloads` is missing (or `db` or
+   `assets`), publish once more with that full set.
 3. Reply with one line per slide (mention its build steps), then
    placeholders to confirm, empty frames, and anything outside frames. No
    recap of steps.
