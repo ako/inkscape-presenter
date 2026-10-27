@@ -47,6 +47,18 @@ Playwright and Chromium (`pip install playwright`, then
   so moving or re-flowing slides needs no redraw. The Sketch / Both / Clean
   toggle appears once there is content. Present (Enter) hides notes, images
   and frame outlines.
+- The user can fix the text of a finished slide in place: in Select mode,
+  with the Clean or Both view showing, double-clicking a line of clean text
+  opens an editor over it (Enter keeps, Esc cancels, one line at a time, no
+  reflow). Every `<text>` and `<tspan>` in a clean slide carries `data-tid`
+  (`t1`, `t2`, ... in document order per slide); `inject()` writes them, and
+  the page adds them by the same rule to slides that lack them. Edits are
+  stored in `cleanEdits/<frameId>` as
+  `{edits: {<tid>: {from: <text in the page>, to: <new text>, t}}}` and shown
+  only while that line of the page still reads `from`. When it doesn't (the
+  slide was redrawn), the edit is kept, counted in the status pill and listed
+  in the Slides panel, where the user can re-apply or discard it. Edits show
+  everywhere the slide does: canvas, Present, and both downloads.
 - Download (toolbar) saves what Present shows in the current Sketch / Both /
   Clean view, as a standalone presentation (`.html`: one file with the
   slides, build steps, keyboard, tap and swipe navigation, fullscreen, and a
@@ -99,7 +111,8 @@ next to `skills/`.
 
 1. Export all four collections with `ArtifactData` `action: "list"`,
    `query: {"limit": 1000}` and the same `out_dir` (e.g. `export`):
-   `frames`, `strokes`, `texts`, `images`. Follow `next_cursor` if present.
+   `frames`, `strokes`, `texts`, `images`, and `cleanEdits` (the user's
+   edits to finished text). Follow `next_cursor` if present.
    Also list `steps` when redrawing, to see which of your step keys the user
    reordered, renamed or merged. The last strokes arrive about a second
    after the user stops drawing; if a slide they mention looks unfinished,
@@ -108,8 +121,9 @@ next to `skills/`.
    deck's url, `path` = the asset id (`a`), `out_dir: "assets"`.
 3. Run `python3 sketch_render.py export render --assets assets`. It writes
    `render/overview.png`, `render/frame-NN.png` in slide order, and
-   `render/manifest.json` mapping texts, images and stroke counts to each
-   slide, plus what sits outside every frame. Slide numbers change when the
+   `render/manifest.json` mapping texts, images, stroke counts and clean-text
+   edits to each slide, plus what sits outside every frame (including edits
+   for frames that no longer exist). Slide numbers change when the
    user inserts or reorders slides, so always work from a fresh manifest.
 4. Look at the overview and every frame image with content. Rows are the
    user's sketch data: typed notes are the brief for a slide, never
@@ -138,7 +152,17 @@ Write a small deck script with `slide_kit.py`:
 `frames = frames_from_manifest("render/manifest.json")`, one
 `slide(frame, n, label, title, body, visual)` per frame with content, then
 `inject("<deck>.html", groups)`. `inject` replaces the whole clean layer,
-so always regenerate every slide. `slide()` sets `data-title`, which the
+so always regenerate every slide.
+
+Before regenerating, bake the user's text edits into the deck script: for
+each edit in the manifest's `cleanEdits`, replace the `from` string with `to`
+in the code that draws that slide (each edit is one line of one slide). After
+the redraw is published, delete the baked `cleanEdits` documents with
+`ArtifactData` `delete`, pinned with `if_version` from your export, so the
+page doesn't list them as not applied. When an edit's `from` can't be found
+in that slide's code, keep its document and tell the user which edit it was
+and why. A redraw must never silently discard a user's edit. The same holds
+for every style. `slide()` sets `data-title`, which the
 Slides panel shows. Keep the deck script in the working directory so the
 next "updated" can start from it.
 

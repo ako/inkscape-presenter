@@ -5,15 +5,16 @@ Usage:
   python3 sketch_render.py EXPORT_DIR OUT_DIR [--assets ASSET_DIR]
 
 EXPORT_DIR is the out_dir used with ArtifactData list (one call per
-collection: frames, strokes, texts, images), so it contains
+collection: frames, strokes, texts, images, and cleanEdits), so it contains
 EXPORT_DIR/<collection>/<doc_id>.json. ASSET_DIR holds image files
 fetched with Artifact read (path = asset id); files are matched by the
 asset id at the start of their name.
 
 Writes OUT_DIR/overview.png and OUT_DIR/frame-NN.png (NN = slide number,
 in presentation order), plus OUT_DIR/manifest.json, which lists every
-frame with the texts, images and stroke counts that fall inside it, and
-the items outside any frame. Prints the manifest too.
+frame with the texts, images and stroke counts that fall inside it and the
+user's edits to its finished text (cleanEdits: tid, from, to), and the
+items outside any frame. Prints the manifest too.
 """
 import base64, glob, html, json, mimetypes, os, sys
 
@@ -50,6 +51,7 @@ def main():
     os.makedirs(out, exist_ok=True)
     frames = load(export, 'frames'); strokes = load(export, 'strokes')
     texts = load(export, 'texts'); images = load(export, 'images')
+    clean_edits = {k: (d.get('edits') or {}) for k, d in load(export, 'cleanEdits').items()}
     order = sorted(frames, key=lambda k: (frames[k].get('t', 0), k))
 
     def data_uri(asset):
@@ -99,7 +101,7 @@ def main():
 
     def inside(f, x, y): return f['x'] <= x <= f['x'] + f['w'] and f['y'] <= y <= f['y'] + f['h']
 
-    manifest = {'frames': [], 'outside': {'texts': [], 'images': [], 'strokes': 0}}
+    manifest = {'frames': [], 'outside': {'texts': [], 'images': [], 'strokes': 0, 'cleanEdits': []}}
     used_t, used_i, used_s = set(), set(), set()
     for n, k in enumerate(order, 1):
         f = frames[k]
@@ -113,10 +115,16 @@ def main():
         used_t |= {t['id'] for t in ts}; used_i |= {i['id'] for i in ims}; used_s |= set(sts)
         manifest['frames'].append({'slide': n, 'id': k, 'x': f['x'], 'y': f['y'], 'w': f['w'], 'h': f['h'],
                                    'texts': ts, 'images': ims, 'strokes': len(sts),
+                                   'cleanEdits': [{'tid': tid, 'from': e.get('from'), 'to': e.get('to')}
+                                                  for tid, e in clean_edits.get(k, {}).items()],
                                    'note_strokes': sum(1 for s_ in sts if strokes[s_].get('c') == 'note')})
     manifest['outside']['texts'] = [{'id': k, 'text': t.get('text', '')} for k, t in texts.items() if k not in used_t]
     manifest['outside']['images'] = [{'id': k, 'asset': m.get('a')} for k, m in images.items() if k not in used_i]
     manifest['outside']['strokes'] = len([k for k in strokes if k not in used_s])
+    # edits kept for a frame that no longer exists
+    manifest['outside']['cleanEdits'] = [{'frame': fid, 'tid': tid, 'from': e.get('from'), 'to': e.get('to')}
+                                         for fid, edits in clean_edits.items() if fid not in frames
+                                         for tid, e in edits.items()]
 
     x0, y0, x1, y1 = bbox_items(); pad = max(x1 - x0, y1 - y0) * 0.03
     views = {'overview': (x0 - pad, y0 - pad, x1 - x0 + 2 * pad, y1 - y0 + 2 * pad)}

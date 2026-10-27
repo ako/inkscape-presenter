@@ -52,6 +52,12 @@ body[data-tool="select"] #deck{cursor:default}
 .tnote.selected rect{stroke:var(--cobalt);stroke-width:2}
 .tnote.editing{visibility:hidden}
 #editor{position:fixed;z-index:4;margin:0;resize:none;overflow:hidden;box-sizing:border-box;font-family:var(--f-body);line-height:1.35;color:#8a2d0c;background:#fff3e8;border:1.5px solid var(--marker);border-radius:3px;outline:none;box-shadow:0 6px 24px rgba(0,0,0,.18)}
+#cleanEditor{position:fixed;z-index:4;margin:0;box-sizing:border-box;border:0;padding:0 4px;border-radius:2px;outline:2px solid var(--cobalt);outline-offset:1px;background:rgba(255,255,255,.94);box-shadow:0 4px 18px rgba(0,0,0,.2);white-space:pre}
+body[data-tool="select"]:not(.present):not([data-view="sketch"]) #clean [data-tid]{cursor:text}
+.plist .confirm.lost{flex-direction:column;align-items:stretch;gap:4px}
+.plist .lostRow{display:flex;gap:6px;align-items:center}
+.plist .lostTxt{flex:1;min-width:0;color:var(--text);overflow-wrap:anywhere}
+.plist .lostTxt small{display:block;font:11px var(--f-mono);color:var(--dim)}
 #editor.ink{color:var(--ink);font-weight:500;background:rgba(255,255,255,.92);border-color:var(--cobalt)}
 /* build steps */
 [data-step],.stroke,.tnote,.ref{transition:opacity .45s ease}
@@ -219,6 +225,7 @@ body.present .stroke.note,body.present .tnote.note,body.present #images,body.pre
     <li><b>Select</b> (V) to move, resize, delete or duplicate. Moving a frame takes its content along.</li>
     <li><b>Slides</b> (S) to insert, delete and reorder slides; the grid re-flows and renumbers. <b>Steps</b> (L) to order what appears when on a slide.</li>
     <li>When you're done, tell Claude in the chat to turn the sketch into visuals.</li>
+    <li>Double-click the text of a finished slide (Select, V) to fix a word or a number; Enter keeps it, Esc cancels.</li>
     <li><b>Download</b> saves the slides as a standalone presentation (.html), or as layers for Inkscape (.svg).</li>
   </ol>
   <div class="row"><button id="bHint">Got it</button></div>
@@ -253,6 +260,7 @@ body.present .stroke.note,body.present .tnote.note,body.present #images,body.pre
 </aside>
 <div id="drop" hidden><p>Drop images to add them as references</p></div>
 <textarea id="editor" hidden spellcheck="true" aria-label="Note text"></textarea>
+<input id="cleanEditor" type="text" hidden spellcheck="true" aria-label="Slide text">
 <div id="empty" hidden><p>Draw a frame first (F, then drag) to make a slide.</p></div>
 
 <script>
@@ -265,7 +273,7 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------------- camera ---------------- */
 let W = 1, H = 1, cam = { x: 1800, y: 1000, w: 3600 }, raf = 0;
-function render(){ const s = W / cam.w; camG.setAttribute('transform', `translate(${W/2} ${H/2}) scale(${s}) translate(${-cam.x} ${-cam.y})`); if (typeof drawSel === 'function') drawSel(); if (typeof placeEditor === 'function') placeEditor(); }
+function render(){ const s = W / cam.w; camG.setAttribute('transform', `translate(${W/2} ${H/2}) scale(${s}) translate(${-cam.x} ${-cam.y})`); if (typeof drawSel === 'function') drawSel(); if (typeof placeEditor === 'function') placeEditor(); if (typeof placeCleanEditor === 'function') placeCleanEditor(); }
 const toWorld = (px, py) => { const s = W / cam.w; return { x: cam.x + (px - W/2) / s, y: cam.y + (py - H/2) / s }; };
 const pxToWorld = px => px * cam.w / W;
 function fitRect(r, pad = 0.92){ const s = Math.min(W / r.w, H / r.h) * pad; return { x: r.x + r.w/2, y: r.y + r.h/2, w: W / s }; }
@@ -431,7 +439,10 @@ function setStatus(){
   const el = $('status');
   el.classList.toggle('warn', !db || readOnly);
   const counts = `${strokes.size} stroke${strokes.size === 1 ? '' : 's'} · ${texts.size} text${texts.size === 1 ? '' : 's'} · ${images.size ? images.size + ' image' + (images.size === 1 ? '' : 's') + ' · ' : ''}${frames.size} frame${frames.size === 1 ? '' : 's'}`;
-  el.textContent = !db ? `Not saved · ${counts}` : readOnly ? `View only · ${counts}` : pending ? 'Saving…' : `Saved · ${counts}`;
+  const lost = cleanUnapplied ? cleanUnapplied.length : 0;
+  el.textContent = (!db ? `Not saved · ${counts}` : readOnly ? `View only · ${counts}` : pending ? 'Saving…' : `Saved · ${counts}`)
+    + (lost ? ` · ${lost} text edit${lost === 1 ? '' : 's'} not applied` : '');
+  if (lost) el.classList.add('warn');
 }
 async function write(fn){
   if (!db || readOnly) return;
@@ -488,6 +499,13 @@ const saveSettings = () => write(() => db.collection('meta').doc('settings').set
     });
     refreshPanels(); applyVisibility();
   }, () => {});
+  db.collection('cleanEdits').onSnapshot(snap => {
+    snap.docChanges().forEach(ch => {
+      if (ch.type === 'removed') cleanEdits.delete(ch.doc.id);
+      else { const d = ch.doc.data(); cleanEdits.set(ch.doc.id, d && d.edits && typeof d.edits === 'object' ? d.edits : {}); }
+    });
+    applyCleanEdits();
+  }, () => {});
   db.collection('meta').doc('settings').onSnapshot(d => {
     const v = d.exists ? d.data() : null;
     if (v){ settings.cols = v.cols || settings.cols; settings.grid = v.grid !== false; $('gridCols').value = String(settings.cols); $('keepGrid').checked = settings.grid; }
@@ -512,6 +530,7 @@ function doUndo(){
 }
 function undoOne(a){
   if (a.kind === 'multi'){ [...a.parts].reverse().forEach(undoOne); return; }
+  if (a.kind === 'clean-text'){ setCleanEdit(a.fid, a.tid, a.before); return; }
   if (a.kind === 'steps'){
     if (a.before){ stepDocs.set(a.fid, a.before); saveSteps(a.fid, a.before); }
     else { stepDocs.delete(a.fid); del('steps', a.fid); }
@@ -955,6 +974,14 @@ function renderPanels(){
           ib('Insert a slide after this one', '+', () => insertSlide(ti)),
           ib('Delete slide', '✕', () => { confirmDel = f.id; renderPanels(); }, { danger: true })
         ] : [ib('Delete detail frame', '✕', () => { confirmDel = f.id; renderPanels(); }, { danger: true })]));
+      const lost = cleanUnapplied.filter(u => u.fid === f.id);
+      if (lost.length) li.append(el('div', { class: 'confirm lost', onclick: e => e.stopPropagation() },
+        `${lost.length} text edit${lost.length === 1 ? '' : 's'} not applied: the slide was redrawn since.`,
+        ...lost.map(u => el('div', { class: 'lostRow' },
+          el('span', { class: 'lostTxt' }, `“${u.from}” → “${u.to}”`, el('small', {}, u.why)),
+          el('button', { class: 'pbtn', disabled: !cleanLeaf(u.fid, u.tid), title: cleanLeaf(u.fid, u.tid) ? 'Apply the new text to this line as it reads now' : 'This line is no longer on the slide',
+            onclick: () => reapplyCleanEdit(u) }, 'Re-apply'),
+          el('button', { class: 'pbtn', onclick: () => discardCleanEdit(u) }, 'Discard')))));
       if (confirmDel === f.id){
         const n = contentOf(f.id), cnt = n.strokes.length + n.texts.length + n.images.length + n.frames.length;
         li.append(el('div', { class: 'confirm' }, `Delete slide ${i + 1}${cnt ? ` and its ${cnt} item${cnt === 1 ? '' : 's'}` : ''}?`,
@@ -1061,8 +1088,131 @@ editor.addEventListener('keydown', e => {
 editor.addEventListener('blur', () => setTimeout(() => { if (editing && document.activeElement !== editor) commitEdit(); }, 0));
 svg.addEventListener('dblclick', e => {
   if (present || tool !== 'select') return;
-  const id = textAt(toWorld(...local(e))); if (id) startEdit(id);
+  const id = textAt(toWorld(...local(e)));
+  if (id && document.body.dataset.view !== 'clean'){ startEdit(id); return; }   // a visible note wins
+  const t = cleanTextAt(e.clientX, e.clientY);
+  if (t){ clearSel(); startCleanEdit(t); return; }
+  if (id) startEdit(id);
 });
+
+/* ---------------- editing the finished slides' text ---------------- */
+// Every <text> and <tspan> in a clean slide carries data-tid, unique within its slide:
+// inject() writes them, and older slides get them here by the same rule (document order,
+// t1, t2, ...). An edit is stored per slide as cleanEdits/<frameId> = { edits: { tid:
+// { from, to, t } } }, and shown only while that line of the page still reads `from`;
+// otherwise it is listed as not applied. Edits never touch the sketch collections.
+var cleanEdits = new Map();     // frameId -> { tid: { from, to, t } }
+var cleanOrig = new WeakMap();  // element -> its text as written in the page
+var cleanUnapplied = [];        // [{ fid, tid, from, to, why }]
+var cleanEditing = null;        // { el, fid, tid, before }
+const cleanEditor = $('cleanEditor');
+const cleanSlides = () => [...cleanG.querySelectorAll(':scope > g[data-frame]')];
+const isLeafText = el => !el.querySelector('tspan');
+function assignTids(){
+  cleanSlides().forEach(g => {
+    const els = [...g.querySelectorAll('text, tspan')];
+    const used = new Set(els.map(t => t.getAttribute('data-tid')).filter(Boolean));
+    els.forEach((t, i) => {
+      if (!t.getAttribute('data-tid')){
+        let k = 't' + (i + 1), n = 2;
+        while (used.has(k)) k = 't' + (i + 1) + '_' + n++;
+        t.setAttribute('data-tid', k); used.add(k);
+      }
+      if (!cleanOrig.has(t)) cleanOrig.set(t, t.textContent);
+    });
+  });
+}
+function cleanLeaf(fid, tid){
+  const g = cleanGroupOf(fid), t = g && g.querySelector(`[data-tid="${CSS.escape(tid)}"]`);
+  return t && isLeafText(t) ? t : null;
+}
+function applyCleanEdits(){
+  cleanSlides().forEach(g => {
+    const edits = cleanEdits.get(g.dataset.frame) || {};
+    g.querySelectorAll('[data-tid]').forEach(t => {
+      if (!isLeafText(t) || (cleanEditing && cleanEditing.el === t)) return;
+      const e = edits[t.getAttribute('data-tid')], orig = cleanOrig.get(t);
+      const want = e && e.from === orig ? e.to : orig;
+      if (typeof want === 'string' && t.textContent !== want) t.textContent = want;
+    });
+  });
+  cleanUnapplied = [];
+  cleanEdits.forEach((edits, fid) => Object.entries(edits).forEach(([tid, e]) => {
+    const t = cleanLeaf(fid, tid);
+    const why = !cleanGroupOf(fid) ? 'that slide is not drawn' : !t ? 'that line is gone' : cleanOrig.get(t) !== e.from ? `that line now reads “${cleanOrig.get(t)}”` : '';
+    if (why) cleanUnapplied.push({ fid, tid, from: e.from, to: e.to, why });
+  }));
+  setStatus(); refreshPanels();
+}
+function setCleanEdit(fid, tid, entry){   // entry null removes the edit
+  const edits = { ...(cleanEdits.get(fid) || {}) };
+  if (entry) edits[tid] = entry; else delete edits[tid];
+  if (Object.keys(edits).length){ cleanEdits.set(fid, edits); write(() => db.collection('cleanEdits').doc(fid).set({ edits })); }
+  else { cleanEdits.delete(fid); write(() => db.collection('cleanEdits').doc(fid).delete()); }
+  applyCleanEdits();
+}
+// the line of clean text under a screen point: the smallest box that holds it
+function cleanTextAt(cx, cy){
+  if (document.body.dataset.view === 'sketch') return null;
+  let best = null, area = Infinity;
+  cleanSlides().forEach(g => {
+    if (g.style.display === 'none') return;
+    g.querySelectorAll('[data-tid]').forEach(t => {
+      if (!isLeafText(t) || !t.textContent.trim()) return;
+      const r = t.getBoundingClientRect(), a = r.width * r.height;
+      if (a && cx >= r.left - 3 && cx <= r.right + 3 && cy >= r.top - 3 && cy <= r.bottom + 3 && a <= area){ best = t; area = a; }
+    });
+  });
+  return best;
+}
+function placeCleanEditor(){
+  if (!cleanEditing) return;
+  const t = cleanEditing.el, m = t.getScreenCTM(); if (!m) return;
+  const k = Math.hypot(m.a, m.b), cs = getComputedStyle(t), fs = parseFloat(cs.fontSize) * k;
+  const ls = (parseFloat(cs.letterSpacing) || 0) * k, fill = cs.fill && !cs.fill.startsWith('url') && cs.fill !== 'none' ? cs.fill : '#1b2a33';
+  cleanEditor.style.font = `${cs.fontStyle} ${cs.fontWeight} ${fs}px ${cs.fontFamily}`;
+  cleanEditor.style.letterSpacing = ls + 'px';
+  cleanEditor.style.color = fill;
+  const anchor = cs.textAnchor, r = t.getBoundingClientRect();
+  measure.font = cleanEditor.style.font;
+  const w = Math.max(r.width, measure.measureText(cleanEditor.value).width + ls * cleanEditor.value.length) + 12, h = Math.max(fs * 1.3, r.height + 4);
+  cleanEditor.style.textAlign = anchor === 'middle' ? 'center' : anchor === 'end' ? 'right' : 'left';
+  cleanEditor.style.left = (anchor === 'middle' ? r.left + r.width / 2 - w / 2 : anchor === 'end' ? r.right - w + 6 : r.left - 6) + 'px';
+  cleanEditor.style.top = (r.top + r.height / 2 - h / 2) + 'px';
+  cleanEditor.style.width = w + 'px'; cleanEditor.style.height = h + 'px'; cleanEditor.style.lineHeight = h + 'px';
+}
+function startCleanEdit(t){
+  if (editing) commitEdit();
+  if (cleanEditing) endCleanEdit(true);
+  cleanEditing = { el: t, fid: t.closest('g[data-frame]').dataset.frame, tid: t.getAttribute('data-tid'), before: t.textContent };
+  cleanEditor.value = t.textContent; cleanEditor.hidden = false;
+  placeCleanEditor(); t.style.visibility = 'hidden';
+  cleanEditor.focus(); cleanEditor.select();
+}
+function endCleanEdit(keep){
+  const c = cleanEditing; if (!c) return;
+  cleanEditing = null; cleanEditor.hidden = true; c.el.style.visibility = '';
+  if (!keep || cleanEditor.value === c.before) return;
+  const orig = cleanOrig.get(c.el), text = cleanEditor.value;
+  undo.push({ kind: 'clean-text', fid: c.fid, tid: c.tid, before: (cleanEdits.get(c.fid) || {})[c.tid] || null });
+  setCleanEdit(c.fid, c.tid, text === orig ? null : { from: orig, to: text, t: Date.now() });
+}
+function reapplyCleanEdit(u){
+  const t = cleanLeaf(u.fid, u.tid); if (!t) return;
+  undo.push({ kind: 'clean-text', fid: u.fid, tid: u.tid, before: (cleanEdits.get(u.fid) || {})[u.tid] || null });
+  setCleanEdit(u.fid, u.tid, cleanOrig.get(t) === u.to ? null : { from: cleanOrig.get(t), to: u.to, t: Date.now() });
+}
+function discardCleanEdit(u){
+  undo.push({ kind: 'clean-text', fid: u.fid, tid: u.tid, before: (cleanEdits.get(u.fid) || {})[u.tid] || null });
+  setCleanEdit(u.fid, u.tid, null);
+}
+cleanEditor.addEventListener('input', placeCleanEditor);
+cleanEditor.addEventListener('keydown', e => {
+  if (e.key === 'Enter'){ e.preventDefault(); endCleanEdit(true); }
+  else if (e.key === 'Escape'){ e.preventDefault(); endCleanEdit(false); }
+  e.stopPropagation();
+});
+cleanEditor.addEventListener('blur', () => setTimeout(() => { if (cleanEditing && document.activeElement !== cleanEditor) endCleanEdit(true); }, 0));
 
 /* ---------------- images: paste, drop, upload ---------------- */
 let assets = null, lastPointer = null, clip = null, clipMarker = '';
@@ -1262,6 +1412,7 @@ svg.addEventListener('pointerdown', e => {
   cancelAnimationFrame(raf);
   const [lx, ly] = local(e);
   if (editing && !present){ const wasText = tool === 'text'; commitEdit(); if (wasText){ ptrs.delete(e.pointerId); return; } }
+  if (cleanEditing) endCleanEdit(true);
   if (present){
     act = { kind: 'tap', x0: e.clientX, y0: e.clientY };
     return;
@@ -1462,7 +1613,7 @@ function prev(){
   else if (slide > 0) go(slide - 1, true);
 }
 function setPresent(on){
-  flushSaves();
+  flushSaves(); endCleanEdit(true);
   if (on && !frames.size){ $('empty').hidden = false; setTimeout(() => $('empty').hidden = true, 2200); return; }
   present = on; cancelAct();
   document.body.classList.toggle('present', on);
@@ -1473,6 +1624,7 @@ function setPresent(on){
 
 /* ---------------- view toggle (appears once Claude has drawn) ---------------- */
 function setView(v){
+  if (v === 'sketch' && typeof endCleanEdit === 'function') endCleanEdit(true);
   document.body.dataset.view = v;
   document.querySelectorAll('#viewSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === v));
 }
@@ -2045,12 +2197,12 @@ function toggleDlMenu(open){
   if (open) $('bDlHtml').focus();
 }
 async function downloadPresentation(){
-  toggleDlMenu(false); flushSaves();
+  toggleDlMenu(false); flushSaves(); endCleanEdit(true);
   if (!frames.size){ $('empty').hidden = false; setTimeout(() => $('empty').hidden = true, 2200); return; }
   await saveFile(exportName('html'), buildExportHtml(), 'text/html');
 }
 async function downloadDrawing(){
-  toggleDlMenu(false); flushSaves();
+  toggleDlMenu(false); flushSaves(); endCleanEdit(true);
   await saveFile(exportName('svg'), '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(buildExportSvg()) + '\n', 'image/svg+xml');
 }
 // inside claude.ai saving needs the downloads capability; hide the button when this view has none
@@ -2136,6 +2288,7 @@ window.addEventListener('keyup', e => { if (e.key === ' '){ spaceDown = false; d
 
 resize();
 syncClean();
+assignTids(); applyCleanEdits();
 flyTo({ x: 1800, y: 1000, w: 3600 }, true);
 setStatus();
 })();
