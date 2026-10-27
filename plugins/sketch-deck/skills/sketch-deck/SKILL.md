@@ -67,8 +67,14 @@ Playwright and Chromium (`pip install playwright`, then
   with that arrangement built in) or as
   a drawing for Inkscape (`.svg`: each slide a layer `slide N` with build
   steps as sublayers `step N`, plus hidden `frames` and `notes` layers). The
-  `.svg` follows the inkscape-presenter layer conventions. Saving goes
-  through the `downloads` capability; the viewer confirms each file.
+  `.svg` follows the inkscape-presenter layer conventions. Both are
+  self-contained and work offline: the page embeds the slides' images
+  (`/_blob/` assets, as they are, so GIFs stay animated) and the Google
+  Fonts the slides use as `data:` URIs, fetching each once and showing
+  progress in the status pill, then the file's size. What can't be fetched
+  keeps its URL, and the status pill says how many images or fonts were
+  not embedded. Saving goes through the `downloads` capability; the viewer
+  confirms each file.
 
 ## Bundled files
 
@@ -205,8 +211,8 @@ space, `data-frame` groups, `step()` and stable step keys stay the same.
 
 Every kit has `theme_page(html, title)` for step 1 and `inject(html,
 groups)` for the clean layer, and draws plain SVG strings. A style's fonts
-come from the page's Google Fonts link, which `theme_page` extends, so the
-page and its downloads load them.
+come from the page's Google Fonts link, which `theme_page` extends; the
+page loads them from there and the downloads embed them.
 
 ## Poster decks
 

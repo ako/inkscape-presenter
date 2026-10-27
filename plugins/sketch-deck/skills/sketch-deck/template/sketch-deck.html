@@ -1700,6 +1700,7 @@ function buildExportSvg(){
   out.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
   exTitle(out, document.title);
   const style = document.createElementNS(NS, 'style');
+  style.setAttribute('data-sd-fonts', '');
   style.textContent = (FONTS_URL ? `@import url("${FONTS_URL}");` : '') + EXPORT_CSS;
   out.append(style);
   cleanG.querySelectorAll(':scope > defs').forEach(d => out.append(d.cloneNode(true)));
@@ -2157,8 +2158,7 @@ const PLAYER_HTML = '<div id="hud"><button id="navBtn" aria-expanded="false" ari
   + '</aside>'
   + '<script type="application/json" id="sd-arrangement">null</' + 'script>';
 
-function buildExportHtml(){
-  const svgEl = buildExportSvg();
+function buildExportHtml(svgEl = buildExportSvg(), fontCss = ''){
   svgEl.setAttribute('id', 'deck');
   svgEl.removeAttribute('width'); svgEl.removeAttribute('height');
   svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
@@ -2166,11 +2166,96 @@ function buildExportHtml(){
   return '<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'
     + '<meta name="viewport" content="width=device-width,initial-scale=1">'
     + `<title>${esc(document.title)}</title>`
-    + (FONTS_URL ? `<link rel="stylesheet" href="${esc(FONTS_URL)}">` : '')
+    + (fontCss ? '<style>' + fontCss + '</style>' : FONTS_URL ? `<link rel="stylesheet" href="${esc(FONTS_URL)}">` : '')
     + '<style>' + PLAYER_CSS + '</style>'
     + '</head><body>\n' + new XMLSerializer().serializeToString(svgEl)
     + '\n' + PLAYER_HTML + '\n<script>' + PLAYER_JS + '</' + 'script>\n</body></html>\n';
 }
+
+/* ---- self-contained downloads: images and fonts embedded as data: URIs ---- */
+const XLINK_NS = 'http://www.w3.org/1999/xlink';
+const dataUris = new Map();    // url -> Promise of a data: URI, or null when it could not be fetched
+let fontCssText = null;        // Promise of the Google Fonts stylesheet, or null
+async function fetchTimed(url){
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 20000);
+  try { const r = await fetch(url, { signal: ctl.signal }); if (!r.ok) throw new Error('HTTP ' + r.status); return r; }
+  finally { clearTimeout(timer); }
+}
+// a file's type from its first bytes, for servers that don't say
+async function sniffType(blob){
+  const b = new Uint8Array(await blob.slice(0, 16).arrayBuffer()), at = (i, ...v) => v.every((x, k) => b[i + k] === x);
+  if (at(0, 0x89, 0x50, 0x4e, 0x47)) return 'image/png';
+  if (at(0, 0x47, 0x49, 0x46, 0x38)) return 'image/gif';
+  if (at(0, 0xff, 0xd8, 0xff)) return 'image/jpeg';
+  if (at(0, 0x52, 0x49, 0x46, 0x46) && at(8, 0x57, 0x45, 0x42, 0x50)) return 'image/webp';
+  if (at(0, 0x77, 0x4f, 0x46, 0x32)) return 'font/woff2';
+  if (at(0, 0x77, 0x4f, 0x46, 0x46)) return 'font/woff';
+  if (at(0, 0x00, 0x01, 0x00, 0x00)) return 'font/ttf';
+  const head = new TextDecoder().decode(b).trim();
+  return head.startsWith('<svg') || head.startsWith('<?xml') ? 'image/svg+xml' : '';
+}
+function toDataUri(url){
+  if (!dataUris.has(url)) dataUris.set(url, (async () => {
+    try {
+      let blob = await (await fetchTimed(url)).blob();
+      if (!blob.type || blob.type === 'application/octet-stream'){ const t = await sniffType(blob); if (t) blob = new Blob([blob], { type: t }); }
+      return await new Promise((ok, fail) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = () => fail(fr.error); fr.readAsDataURL(blob); });
+    } catch (e) { dataUris.delete(url); return null; }   // not cached: the next download tries again
+  })());
+  return dataUris.get(url);
+}
+// the @font-face rules of the Google Fonts stylesheet that cover characters in `text`, and
+// the font files they need; unicode-range subsets the deck doesn't use are left out
+async function fontPlan(text){
+  if (!FONTS_URL) return null;
+  if (!fontCssText) fontCssText = fetchTimed(FONTS_URL).then(r => r.text()).catch(() => { fontCssText = null; return null; });
+  const css = await fontCssText; if (!css) return null;
+  const cps = [...new Set(text)].map(c => c.codePointAt(0));
+  const covers = block => {
+    const m = /unicode-range:\s*([^;}]+)/i.exec(block); if (!m) return true;
+    return m[1].split(',').some(r => {
+      r = r.trim().replace(/^U\+/i, '');
+      const [a, b] = r.includes('?') ? [r.replace(/\?/g, '0'), r.replace(/\?/g, 'F')] : r.split('-').concat(r).slice(0, 2);
+      const lo = parseInt(a, 16), hi = parseInt(b, 16);
+      return cps.some(c => c >= lo && c <= hi);
+    });
+  };
+  const blocks = css.split(/(?=@font-face)/).filter(bl => !/^@font-face/.test(bl) || covers(bl));
+  const keep = blocks.join('').replace(/\/\*[^*]*\*\//g, '');
+  const urls = [...new Set([...keep.matchAll(/url\((['"]?)([^'")]+)\1\)/g)].map(m => m[2]))];
+  return { css: keep, urls };
+}
+// build a download with its images and fonts inside it; progress(done, total) reports embedding
+async function buildDownload(kind, progress = () => {}){
+  const svgEl = buildExportSvg();
+  const images = [...svgEl.querySelectorAll('image')];
+  const hrefOf = im => im.getAttribute('href') || im.getAttributeNS(XLINK_NS, 'href') || '';
+  const imgUrls = [...new Set(images.map(hrefOf).filter(u => u && !u.startsWith('data:')))];
+  const plan = await fontPlan(svgEl.textContent + document.title + (kind === 'html' ? PLAYER_HTML + ' 0123456789/·–—×−⤢⛶↑↓“”’' : ''));
+  const fontUrls = plan ? plan.urls : [];
+  const total = imgUrls.length + fontUrls.length; let done = 0;
+  const get = base => u => toDataUri(new URL(u, base).href).then(d => { progress(++done, total); return d; });
+  if (total) progress(0, total);
+  const [imgData, fontData] = await Promise.all([Promise.all(imgUrls.map(get(location.href))), Promise.all(fontUrls.map(get(FONTS_URL)))]);
+  const imgMap = new Map(imgUrls.map((u, i) => [u, imgData[i]]));
+  images.forEach(im => {
+    const d = imgMap.get(hrefOf(im)); if (!d) return;
+    im.setAttribute('href', d);
+    if (im.hasAttributeNS(XLINK_NS, 'href')) im.setAttributeNS(XLINK_NS, 'xlink:href', d);
+  });
+  let fontCss = '', failedFonts = FONTS_URL && !plan ? 1 : 0;
+  if (plan){
+    fontCss = plan.css;
+    fontUrls.forEach((u, i) => { if (fontData[i]) fontCss = fontCss.split(u).join(fontData[i]); else failedFonts++; });
+    const st = svgEl.querySelector('style[data-sd-fonts]');
+    st.textContent = (kind === 'svg' ? fontCss : '') + EXPORT_CSS;   // the html carries the fonts in its head
+  }
+  svgEl.querySelector('style[data-sd-fonts]').removeAttribute('data-sd-fonts');
+  const text = kind === 'html' ? buildExportHtml(svgEl, fontCss)
+    : '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(svgEl) + '\n';
+  return { text, failedImages: imgData.filter(d => !d).length, failedFonts };
+}
+const fmtSize = n => n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
 
 function exportName(ext){
   const slug = (document.title || '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -2178,9 +2263,10 @@ function exportName(ext){
 }
 let noteTimer = 0;
 function flashStatus(msg){ const el = $('status'); el.textContent = msg; clearTimeout(noteTimer); noteTimer = setTimeout(setStatus, 3500); }
-async function saveFile(filename, text, type){
+async function saveFile(filename, text, type, note = ''){
+  const done = `Downloaded ${filename} · ${fmtSize(new Blob([text]).size)}${note}`;
   if (downloads){
-    try { await downloads.save({ filename, data: text }); flashStatus('Downloaded ' + filename); }
+    try { await downloads.save({ filename, data: text }); flashStatus(done); }
     catch (e){ if (!e || e.code !== 'declined') flashStatus('Download failed: ' + ((e && e.message) || 'try again')); }
     return;
   }
@@ -2189,7 +2275,15 @@ async function saveFile(filename, text, type){
   a.href = URL.createObjectURL(new Blob([text], { type })); a.download = filename;
   document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-  flashStatus('Downloaded ' + filename);
+  flashStatus(done);
+}
+function holdStatus(msg){ clearTimeout(noteTimer); $('status').textContent = msg; }
+async function download(kind){
+  holdStatus('Preparing the download…');
+  const r = await buildDownload(kind, (d, t) => holdStatus(`Embedding images and fonts… ${d}/${t}`));
+  const miss = [r.failedImages && `${r.failedImages} image${r.failedImages === 1 ? '' : 's'}`, r.failedFonts && `${r.failedFonts} font${r.failedFonts === 1 ? '' : 's'}`].filter(Boolean);
+  await saveFile(exportName(kind), r.text, kind === 'html' ? 'text/html' : 'image/svg+xml',
+    miss.length ? ` · ${miss.join(' and ')} not embedded (needs a connection)` : '');
 }
 function toggleDlMenu(open){
   const m = $('dlMenu'); open = open == null ? m.hidden : open;
@@ -2199,11 +2293,11 @@ function toggleDlMenu(open){
 async function downloadPresentation(){
   toggleDlMenu(false); flushSaves(); endCleanEdit(true);
   if (!frames.size){ $('empty').hidden = false; setTimeout(() => $('empty').hidden = true, 2200); return; }
-  await saveFile(exportName('html'), buildExportHtml(), 'text/html');
+  await download('html');
 }
 async function downloadDrawing(){
   toggleDlMenu(false); flushSaves(); endCleanEdit(true);
-  await saveFile(exportName('svg'), '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(buildExportSvg()) + '\n', 'image/svg+xml');
+  await download('svg');
 }
 // inside claude.ai saving needs the downloads capability; hide the button when this view has none
 $('bDownload').hidden = !!window.claude;
