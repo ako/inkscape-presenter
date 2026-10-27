@@ -74,7 +74,8 @@ Playwright and Chromium (`pip install playwright`, then
   progress in the status pill, then the file's size. What can't be fetched
   keeps its URL, and the status pill says how many images or fonts were
   not embedded. Saving goes through the `downloads` capability; the viewer
-  confirms each file.
+  confirms each file. A deck published without that capability shows the
+  Download button disabled, with a tooltip saying Claude can add it.
 
 ## Bundled files
 
@@ -107,7 +108,9 @@ next to `skills/`.
 2. Publish it as a NEW artifact: that `file_path`,
    `capabilities: {"db": {}, "assets": {}, "downloads": true}`,
    `icon: "pencil"`, a one-line `description`. Each deck gets its own empty
-   database and image storage.
+   database and image storage. Every publish that creates a new deck
+   artifact declares this full set, however the deck was made: from the
+   template, by copying or merging other decks, or from an example.
 3. Check the database with one `ArtifactData` `list` of `frames` (expect
    empty).
 4. Reply in a few lines: it's ready, the key tools, and "say done or
@@ -252,7 +255,9 @@ when the user asks for a poster, an overview to zoom into, or "Prezi".
    declared. A deck made before the Download menu existed lacks
    `downloads`: when you update such a deck to the current page, pass
    `capabilities: {"db": {}, "assets": {}, "downloads": true}` once (the
-   full set, since a non-empty object replaces what is declared).
+   full set, since a non-empty object replaces what is declared). Check
+   the publish result: if it warns that `downloads` is missing (or `db` or
+   `assets`), publish once more with that full set.
 3. Reply with one line per slide (mention its build steps), then
    placeholders to confirm, empty frames, and anything outside frames. No
    recap of steps.

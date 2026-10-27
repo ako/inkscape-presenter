@@ -118,6 +118,8 @@ body.present .stroke.note,body.present .tnote.note,body.present #images,body.pre
 .bar button{font:500 13px/1 var(--f-body);color:var(--text);background:transparent;border:1px solid transparent;border-radius:7px;padding:8px 10px;display:inline-flex;align-items:center;gap:7px;cursor:pointer;white-space:nowrap}
 .bar button:hover{background:rgba(236,238,233,.07)}
 .bar button:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
+.bar button[aria-disabled="true"]{opacity:.45;cursor:default}
+.bar button[aria-disabled="true"]:hover{background:transparent}
 .bar button[aria-pressed="true"]{background:rgba(236,238,233,.12);border-color:rgba(236,238,233,.22)}
 .bar kbd{font-family:var(--f-mono);font-size:10.5px;color:var(--dim)}
 .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
@@ -2299,13 +2301,20 @@ async function downloadDrawing(){
   toggleDlMenu(false); flushSaves(); endCleanEdit(true);
   await download('svg');
 }
-// inside claude.ai saving needs the downloads capability; hide the button when this view has none
+// inside claude.ai saving needs the downloads capability; without it the button stays, disabled, and says why
+const NO_DOWNLOADS = 'Downloads are off: this deck needs the downloads capability. Ask Claude to add it.';
 $('bDownload').hidden = !!window.claude;
 (async () => {
   try { downloads = window.claude ? await window.claude.use('downloads') : null; } catch (e) { downloads = null; }
-  $('bDownload').hidden = !!window.claude && !downloads;
+  const off = !!window.claude && !downloads, b = $('bDownload');
+  b.hidden = false;
+  if (off){ b.setAttribute('aria-disabled', 'true'); b.removeAttribute('aria-haspopup'); b.title = NO_DOWNLOADS; }
 })();
-$('bDownload').onclick = e => { e.stopPropagation(); toggleDlMenu(); };
+$('bDownload').onclick = e => {
+  e.stopPropagation();
+  if ($('bDownload').getAttribute('aria-disabled') === 'true') return flashStatus(NO_DOWNLOADS);
+  toggleDlMenu();
+};
 $('bDlHtml').onclick = downloadPresentation;
 $('bDlSvg').onclick = downloadDrawing;
 document.addEventListener('pointerdown', e => { if (!$('dlMenu').hidden && !e.target.closest('#dlMenu,#bDownload')) toggleDlMenu(false); }, true);
