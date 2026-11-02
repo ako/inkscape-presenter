@@ -63,6 +63,9 @@ body[data-tool="select"]:not(.present):not([data-view="sketch"]) #clean [data-ti
 [data-step],.stroke,.tnote,.ref{transition:opacity .45s ease}
 .step-hidden{opacity:0!important;pointer-events:none}
 .step-peek{opacity:.18!important}
+body.present[data-motion="depth"] #clean [data-step]{transition:opacity .5s ease,translate .6s cubic-bezier(.2,.7,.2,1)}
+body.present[data-motion="depth"] #clean .step-hidden{translate:0 26px}
+@media (prefers-reduced-motion:reduce){body.present #clean .step-hidden{translate:none}}
 /* side panels */
 .panel{position:fixed;z-index:5;top:calc(76px + env(safe-area-inset-top,0px));bottom:calc(64px + env(safe-area-inset-bottom,0px));width:330px;max-width:calc(100% - 32px);display:flex;flex-direction:column;background:var(--bar);border:1px solid var(--line);border-radius:12px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:var(--text)}
 .panel.left{left:16px}.panel.right{right:16px}
@@ -275,7 +278,7 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------------- camera ---------------- */
 let W = 1, H = 1, cam = { x: 1800, y: 1000, w: 3600 }, raf = 0;
-function render(){ const s = W / cam.w; camG.setAttribute('transform', `translate(${W/2} ${H/2}) scale(${s}) translate(${-cam.x} ${-cam.y})`); if (typeof drawSel === 'function') drawSel(); if (typeof placeEditor === 'function') placeEditor(); if (typeof placeCleanEditor === 'function') placeCleanEditor(); }
+function render(){ const s = W / cam.w; camG.setAttribute('transform', `translate(${W/2} ${H/2}) scale(${s}) translate(${-cam.x} ${-cam.y})`); if (typeof depthFrame === 'function') depthFrame(); if (typeof drawSel === 'function') drawSel(); if (typeof placeEditor === 'function') placeEditor(); if (typeof placeCleanEditor === 'function') placeCleanEditor(); }
 const toWorld = (px, py) => { const s = W / cam.w; return { x: cam.x + (px - W/2) / s, y: cam.y + (py - H/2) / s }; };
 const pxToWorld = px => px * cam.w / W;
 function fitRect(r, pad = 0.92){ const s = Math.min(W / r.w, H / r.h) * pad; return { x: r.x + r.w/2, y: r.y + r.h/2, w: W / s }; }
@@ -293,12 +296,93 @@ function interpolateZoom(p0, p1){
 }
 const ease = t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
 function flyTo(t, instant){
-  cancelAnimationFrame(raf);
+  cancelAnimationFrame(raf); flight = null;
   if (instant || reduce){ cam = { ...t }; render(); return; }
   const iz = interpolateZoom([cam.x, cam.y, cam.w], [t.x, t.y, t.w]);
-  const dur = Math.min(2000, Math.max(550, iz.duration * 0.85)), t0 = performance.now();
-  const step = now => { const k = Math.min(1, (now - t0) / dur), [x, y, w] = iz(ease(k)); cam = { x, y, w }; render(); if (k < 1) raf = requestAnimationFrame(step); };
+  const deep = present && MOTION === 'depth';
+  const dur = Math.min(deep ? 2400 : 2000, Math.max(deep ? 700 : 550, iz.duration * (deep ? 1.05 : 0.85))), t0 = performance.now();
+  if (deep) depthGather();
+  const step = now => {
+    const k = Math.min(1, (now - t0) / dur), e = ease(k), [x, y, w] = iz(e);
+    if (deep) flight = k < 1 ? { iz, e, now } : null;
+    cam = { x, y, w }; render();
+    if (k < 1) raf = requestAnimationFrame(step);
+  };
   raf = requestAnimationFrame(step);
+}
+
+/* ---------------- depth motion ----------------
+   <g id="clean" data-motion="depth"> gives Present a camera with depth: while it
+   flies, slides nested in another slide's frame and parts marked data-depth
+   (-2.5 far ... 2.5 near, 0 = the slide) move as layers at their own pace, and
+   the view tilts a little with the motion. Every layer lines up again when the
+   camera arrives, so a slide at rest looks exactly as drawn. */
+const MOTION = cleanG.dataset.motion === 'depth' ? 'depth' : 'glide';
+document.body.dataset.motion = MOTION;
+const DEPTH_LEAD = 0.12, DEPTH_NEST = 0.8, DEPTH_MAX = 2.5, TILT_MAX = 3.5;
+let flight = null, depthEls = null, tilt = { x: 0, y: 0, cx: 0, cy: 0, t: 0 };
+function stopFlight(){ cancelAnimationFrame(raf); flight = null; depthFrame(); }
+function depthOf(el){ const v = parseFloat(el.getAttribute('data-depth')); return isFinite(v) ? Math.max(-DEPTH_MAX, Math.min(DEPTH_MAX, v)) : 0; }
+// a slide nested in other slides' frames sits one level nearer per frame around it (equal frames count once)
+function slideDepth(g){
+  if (g.hasAttribute('data-depth')) return depthOf(g);
+  const f = frames.get(g.dataset.frame); if (!f) return 0;
+  const around = new Set();
+  frames.forEach((o, id) => {
+    if (id === g.dataset.frame || (o.x === f.x && o.y === f.y && o.w === f.w && o.h === f.h)) return;
+    if (o.x <= f.x && o.y <= f.y && o.x + o.w >= f.x + f.w && o.y + o.h >= f.y + f.h) around.add([o.x, o.y, o.w, o.h].join());
+  });
+  return Math.min(DEPTH_MAX, around.size * DEPTH_NEST);
+}
+const toDom = m => new DOMMatrix([m.a, m.b, m.c, m.d, m.e, m.f]);
+function depthGather(){
+  depthRestore();
+  const list = [];
+  cleanG.querySelectorAll(':scope > g[data-frame]').forEach(g => {
+    if (g.style.display === 'none') return;
+    const z = slideDepth(g); if (z) list.push({ el: g, z });
+    g.querySelectorAll('[data-depth]').forEach(el => { const z = depthOf(el); if (z) list.push({ el, z }); });
+  });
+  list.forEach(d => {
+    d.orig = d.el.getAttribute('transform') || '';
+    d.P = toDom(worldMatrix(d.el.parentNode)); d.Pi = d.P.inverse();
+    d.zp = 0;
+    for (let n = d.el.parentNode; n && n !== cleanG; n = n.parentNode){ const o = list.find(x => x.el === n); if (o) d.zp += o.z; }
+  });
+  depthEls = list.length ? list : null;
+}
+function depthRestore(){
+  if (depthEls) depthEls.forEach(d => d.orig ? d.el.setAttribute('transform', d.orig) : d.el.removeAttribute('transform'));
+  depthEls = null;
+  if (typeof syncClean === 'function') syncClean();
+}
+// the world as a layer at depth z sees it: the same flight, run ahead (near) or behind (far)
+function depthMap(iz, e, z){
+  if (!z) return new DOMMatrix();
+  const [cx, cy, cw] = iz(e), [zx, zy, zw] = iz(Math.max(0, Math.min(1, e + DEPTH_LEAD * z * Math.sin(Math.PI * e)))), r = cw / zw;
+  return new DOMMatrix([r, 0, 0, r, cx - r * zx, cy - r * zy]);
+}
+function depthFrame(){
+  if (!flight){
+    if (depthEls) depthRestore();
+    if (tilt.t){ svg.style.transform = ''; tilt = { x: 0, y: 0, cx: 0, cy: 0, t: 0 }; }
+    return;
+  }
+  const { iz, e, now } = flight;
+  if (depthEls) depthEls.forEach(d => {
+    const X = d.Pi.multiply(depthMap(iz, e, d.zp).inverse()).multiply(depthMap(iz, e, d.zp + d.z)).multiply(d.P);
+    d.el.setAttribute('transform', `matrix(${[X.a, X.b, X.c, X.d, X.e, X.f].map(v => +v.toFixed(5)).join(' ')}) ${d.orig}`);
+  });
+  // tilt with the camera's speed across the screen (screen widths per second), eased out near the end
+  if (tilt.t){
+    const dt = Math.max(1, now - tilt.t), vx = (cam.x - tilt.cx) / cam.w * 1000 / dt, vy = (cam.y - tilt.cy) / cam.w * 1000 / dt;
+    const k = Math.min(1, dt / 120), fade = Math.sin(Math.PI * e);
+    tilt.x += (Math.max(-TILT_MAX, Math.min(TILT_MAX, vx * 2.2)) * fade - tilt.x) * k;
+    tilt.y += (Math.max(-TILT_MAX, Math.min(TILT_MAX, vy * 2.2)) * fade - tilt.y) * k;
+    const a = Math.max(Math.abs(tilt.x), Math.abs(tilt.y));
+    svg.style.transform = `perspective(1400px) rotateY(${(-tilt.x).toFixed(3)}deg) rotateX(${tilt.y.toFixed(3)}deg) scale(${(1 + a * 0.012).toFixed(4)})`;
+  }
+  tilt.cx = cam.x; tilt.cy = cam.y; tilt.t = now;
 }
 function zoomAt(px, py, k){
   const before = toWorld(px, py);
@@ -1411,7 +1495,7 @@ svg.addEventListener('pointerdown', e => {
   svg.setPointerCapture(e.pointerId);
   ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY, type: e.pointerType });
   if (e.pointerType === 'pen') sawPen = true;
-  cancelAnimationFrame(raf);
+  stopFlight();
   const [lx, ly] = local(e);
   if (editing && !present){ const wasText = tool === 'text'; commitEdit(); if (wasText){ ptrs.delete(e.pointerId); return; } }
   if (cleanEditing) endCleanEdit(true);
@@ -1561,7 +1645,7 @@ function endPtr(e){
 svg.addEventListener('pointerup', endPtr);
 svg.addEventListener('pointercancel', endPtr);
 svg.addEventListener('wheel', e => {
-  e.preventDefault(); if (present) return; cancelAnimationFrame(raf);
+  e.preventDefault(); if (present) return; stopFlight();
   const [lx, ly] = local(e);
   if (e.ctrlKey || e.metaKey) zoomAt(lx, ly, Math.exp(Math.max(-50, Math.min(50, e.deltaY)) * 0.01));
   else panBy(-e.deltaX, -e.deltaY);
@@ -1701,6 +1785,7 @@ function buildExportSvg(){
   out.setAttribute('width', vb.w); out.setAttribute('height', vb.h);
   out.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
   exTitle(out, document.title);
+  if (MOTION !== 'glide') out.setAttribute('data-sd-motion', MOTION);
   const style = document.createElementNS(NS, 'style');
   style.setAttribute('data-sd-fonts', '');
   style.textContent = (FONTS_URL ? `@import url("${FONTS_URL}");` : '') + EXPORT_CSS;
@@ -1719,6 +1804,8 @@ function buildExportSvg(){
     L.setAttribute('data-sd-slide', i + 1);
     L.setAttribute('data-sd-frame', [f.x, f.y, f.w, f.h].map(r1).join(' '));
     exTitle(L, slideTitle(f.id));
+    const cgd = cleanGroupOf(f.id), sd = MOTION === 'depth' && showClean && cgd ? slideDepth(cgd) : 0;
+    if (sd) L.setAttribute('data-depth', +sd.toFixed(3));
     const steps = activeSteps(f.id), stepOf = new Map();
     steps.forEach((st, j) => st.els.forEach(el => el && stepOf.set(el, j)));
     const stepLayers = steps.map(() => exLayer(''));
@@ -1728,6 +1815,7 @@ function buildExportSvg(){
       stepEls.forEach(el => el.setAttribute('data-sd-x', ''));
       const base = cg.cloneNode(true);
       base.querySelectorAll('[data-sd-x]').forEach(el => el.remove());
+      base.removeAttribute('data-depth');   // the slide's own depth is on its layer
       L.append(exTidy(base));
       stepEls.forEach(el => {
         const m = worldMatrix(el.parentNode), wrap = document.createElementNS(NS, 'g');
@@ -1812,7 +1900,7 @@ function sketchDeckPlayer(){
   /* ---- camera ---- */
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var cam = null, raf = 0, pos = 0, step = 0, hudTimer = 0;
-  function setCam(c){ cam = c; svg.setAttribute('viewBox', [c.x, c.y, c.w, c.h].join(' ')); }
+  function setCam(c, flying){ cam = c; svg.setAttribute('viewBox', [c.x, c.y, c.w, c.h].join(' ')); if (!flying) depthRest(); }
   function frameView(f){ var w = f.w / 0.98, h = f.h / 0.98; return { x: f.x + f.w / 2 - w / 2, y: f.y + f.h / 2 - h / 2, w: w, h: h }; }
   // smooth zoom and pan (van Wijk and Nuij, 2003) between views [cx, cy, width]
   function zoom(p0, p1){
@@ -1831,17 +1919,72 @@ function sketchDeckPlayer(){
     return i;
   }
   function ease(t){ return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+
+  /* ---- depth motion (data-sd-motion="depth"): layers move at their own pace while
+     the camera flies and line up again when it arrives; the view tilts with the motion ---- */
+  var deep = svg.getAttribute('data-sd-motion') === 'depth', LEAD = 0.12, TILT_MAX = 3.5;
+  var depthEls = [], depthOn = false, tilt = { x: 0, y: 0, cx: 0, cy: 0, t: 0 };
+  function staticMatrix(n){
+    var m = new DOMMatrix();
+    for (; n && n !== svg; n = n.parentNode){
+      var b = n.transform && n.transform.baseVal, c = b && b.numberOfItems && b.consolidate();
+      if (c) m = new DOMMatrix([c.matrix.a, c.matrix.b, c.matrix.c, c.matrix.d, c.matrix.e, c.matrix.f]).multiply(m);
+    }
+    return m;
+  }
+  if (deep){
+    [].forEach.call(svg.querySelectorAll('[data-depth]'), function(el){
+      var z = Math.max(-2.5, Math.min(2.5, parseFloat(el.getAttribute('data-depth')) || 0));
+      if (z) depthEls.push({ el: el, z: z, orig: el.getAttribute('transform') || '' });
+    });
+    depthEls.forEach(function(d){
+      d.P = staticMatrix(d.el.parentNode); d.Pi = d.P.inverse(); d.zp = 0;
+      for (var n = d.el.parentNode; n && n !== svg; n = n.parentNode) depthEls.forEach(function(o){ if (o.el === n) d.zp += o.z; });
+    });
+  }
+  function depthMap(z, e, dz){
+    if (!dz) return new DOMMatrix();
+    var c = z(e), q = z(Math.max(0, Math.min(1, e + LEAD * dz * Math.sin(Math.PI * e)))), r = c[2] / q[2];
+    return new DOMMatrix([r, 0, 0, r, c[0] - r * q[0], c[1] - r * q[1]]);
+  }
+  function depthPut(z, e, now){
+    depthOn = true;
+    depthEls.forEach(function(d){
+      var X = d.Pi.multiply(depthMap(z, e, d.zp).inverse()).multiply(depthMap(z, e, d.zp + d.z)).multiply(d.P);
+      d.el.setAttribute('transform', 'matrix(' + [X.a, X.b, X.c, X.d, X.e, X.f].map(function(v){ return +v.toFixed(5); }).join(' ') + ') ' + d.orig);
+    });
+    if (tilt.t){
+      var dt = Math.max(1, now - tilt.t), vx = (cam.x + cam.w / 2 - tilt.cx) / cam.w * 1000 / dt, vy = (cam.y + cam.h / 2 - tilt.cy) / cam.w * 1000 / dt;
+      var k = Math.min(1, dt / 120), fade = Math.sin(Math.PI * e), lim = function(v){ return Math.max(-TILT_MAX, Math.min(TILT_MAX, v * 2.2)) * fade; };
+      tilt.x += (lim(vx) - tilt.x) * k; tilt.y += (lim(vy) - tilt.y) * k;
+      var a = Math.max(Math.abs(tilt.x), Math.abs(tilt.y));
+      svg.style.transform = 'perspective(1400px) rotateY(' + (-tilt.x).toFixed(3) + 'deg) rotateX(' + tilt.y.toFixed(3) + 'deg) scale(' + (1 + a * 0.012).toFixed(4) + ')';
+    }
+    tilt.cx = cam.x + cam.w / 2; tilt.cy = cam.y + cam.h / 2; tilt.t = now;
+  }
+  // put every layer back where it was drawn (also before copying the slides)
+  function depthRest(){
+    if (!depthOn) return;
+    depthOn = false;
+    depthEls.forEach(function(d){ if (d.orig) d.el.setAttribute('transform', d.orig); else d.el.removeAttribute('transform'); });
+    svg.style.transform = ''; tilt = { x: 0, y: 0, cx: 0, cy: 0, t: 0 };
+  }
+  // build steps rise a little into place, in the slide's own units
+  if (deep) slides.forEach(function(s){ s.steps.forEach(function(g){ g.style.setProperty('--sd-rise', (s.w / 1679.2 * 26).toFixed(2) + 'px'); }); });
+
   function fly(t, instant){
     cancelAnimationFrame(raf);
     var f = cam;
     if (!f || instant || reduce){ setCam(t); return; }
     var z = zoom([f.x + f.w / 2, f.y + f.h / 2, f.w], [t.x + t.w / 2, t.y + t.h / 2, t.w]);
-    var a0 = f.h / f.w, a1 = t.h / t.w, dur = Math.min(2000, Math.max(550, z.duration * 0.85)), t0 = performance.now();
+    var dur = deep ? Math.min(2400, Math.max(700, z.duration * 1.05)) : Math.min(2000, Math.max(550, z.duration * 0.85));
+    var a0 = f.h / f.w, a1 = t.h / t.w, t0 = performance.now();
     function frame(now){
       var k = Math.min(1, (now - t0) / dur);
       if (k === 1){ setCam(t); return; }
       var e = ease(k), v = z(e), w = v[2], h = w * (a0 + (a1 - a0) * e);
-      setCam({ x: v[0] - w / 2, y: v[1] - h / 2, w: w, h: h });
+      setCam({ x: v[0] - w / 2, y: v[1] - h / 2, w: w, h: h }, deep);
+      if (deep) depthPut(z, e, now);
       raf = requestAnimationFrame(frame);
     }
     raf = requestAnimationFrame(frame);
@@ -1903,6 +2046,7 @@ function sketchDeckPlayer(){
   // frames, and the panels on top of a poster
   function thumb(s){
     if (thumbs[s.id]) return thumbs[s.id];
+    depthRest();
     var t = document.createElementNS(NS, 'svg');
     t.setAttribute('viewBox', [s.x, s.y, s.w, s.h].join(' '));
     t.setAttribute('class', 'thumb'); t.setAttribute('aria-hidden', 'true');
@@ -1984,6 +2128,7 @@ function sketchDeckPlayer(){
   // a copy of this file with the current arrangement built in
   function saveCopy(){
     var name = $('navName').value.trim();
+    depthRest();
     var doc = document.documentElement.cloneNode(true);
     [].forEach.call(doc.querySelectorAll('.sd-hidden'), function(n){ n.classList.remove('sd-hidden'); });
     doc.querySelector('#navList').textContent = '';
@@ -2114,7 +2259,9 @@ const PLAYER_JS = '(' + sketchDeckPlayer + ')();';
 const PLAYER_CSS = 'html,body{margin:0;height:100%;overflow:hidden;background:#181c20}'
   + '#deck{display:block;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none}'
   + '[data-sd-step]{transition:opacity .45s ease}.sd-hidden{opacity:0!important;pointer-events:none}'
-  + '@media (prefers-reduced-motion:reduce){[data-sd-step]{transition:none}}'
+  + '[data-sd-motion="depth"] [data-sd-step]{transition:opacity .5s ease,translate .6s cubic-bezier(.2,.7,.2,1)}'
+  + '[data-sd-motion="depth"] [data-sd-step].sd-hidden{translate:0 var(--sd-rise,26px)}'
+  + '@media (prefers-reduced-motion:reduce){[data-sd-step]{transition:none}[data-sd-step].sd-hidden{translate:none}}'
   + '[hidden]{display:none!important}'
   + '#hud{position:fixed;right:16px;bottom:16px;display:flex;align-items:center;gap:6px;font:13px "IBM Plex Mono",Menlo,monospace;color:#e0a106;'
   + 'background:rgba(22,26,30,.9);border:1px solid rgba(236,238,233,.14);border-radius:999px;padding:4px 11px 4px 4px;transition:opacity .4s}'

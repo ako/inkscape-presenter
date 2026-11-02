@@ -72,6 +72,15 @@ def step(key, name, svg):
     """A build step: revealed after the base when presenting."""
     return f'<g data-step="{E(key)}" data-name="{E(name)}">{svg}</g>'
 
+def depth(z, svg):
+    """A layer for the depth motion (inject(..., motion="depth")): z from -2.5 (far
+    behind the slide) to 2.5 (near the viewer); 0 is the slide itself. Layers move at
+    their own pace while the camera flies and line up when it arrives. Ignored by the
+    default motion. May hold steps, or sit inside one."""
+    return f'<g data-depth="{z:g}">{svg}</g>'
+
+MOTIONS = ("glide", "depth")
+
 def card():
     return rect(0, 0, LOCAL_W, LOCAL_H, W, HAIR, 2, 22) + f'<rect x="0" y="0" width="12" height="{LOCAL_H}" rx="6" fill="{COB}"/>'
 
@@ -104,12 +113,17 @@ def number_text(svg):
     return _TEXT_TAG.sub(sub, svg)
 
 
-def inject(html_path, groups, defs=DEFS):
+def inject(html_path, groups, defs=DEFS, motion="glide"):
     """Replace the page's clean layer with defs + the given slide groups (one string per
-    slide); every kit writes its slides through here, so their text gets data-tid keys."""
+    slide); every kit writes its slides through here, so their text gets data-tid keys.
+    motion: "glide" (the default camera) or "depth" (layers and a slight tilt while the
+    camera flies; see depth())."""
+    if motion not in MOTIONS:
+        raise ValueError(f"motion must be one of {MOTIONS}, not {motion!r}")
     s = open(html_path).read()
-    i = s.index('<g id="clean">'); j = s.index('<g id="images">')
-    s = s[:i] + '<g id="clean">\n' + defs + "\n".join(number_text(g) for g in groups) + '\n    </g>\n    ' + s[j:]
+    i = s.index('<g id="clean"'); j = s.index('<g id="images">')
+    tag = '<g id="clean">' if motion == "glide" else f'<g id="clean" data-motion="{motion}">'
+    s = s[:i] + tag + '\n' + defs + "\n".join(number_text(g) for g in groups) + '\n    </g>\n    ' + s[j:]
     open(html_path, 'w').write(s)
 
 

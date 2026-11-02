@@ -3,7 +3,9 @@
 * `blueprint-poster/`, `watercolor-blueprint-poster/`, `pen-and-marker-poster/`:
   the same poster, explaining the Sketch Deck skill itself, in each of the
   three named styles. Each is a poster deck: an overview to zoom into, with
-  its parts as their own slides.
+  its parts as their own slides. The Pen & Marker poster uses the depth
+  motion: its cards float above the poster and their drawings above the
+  cards, so presenting flies through layers.
 * `sketch-deck-example/`: a hand-drawn deck, presented as the sketch itself,
   with build steps.
 

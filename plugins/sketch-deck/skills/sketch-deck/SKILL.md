@@ -46,7 +46,8 @@ Playwright and Chromium (`pip install playwright`, then
   slide. The page places each one on its frame's current position and size,
   so moving or re-flowing slides needs no redraw. The Sketch / Both / Clean
   toggle appears once there is content. Present (Enter) hides notes, images
-  and frame outlines.
+  and frame outlines. How the camera moves while presenting is the deck's
+  motion (see "Motion"), set by Claude on the clean layer.
 - The user can fix the text of a finished slide in place: in Select mode,
   with the Clean or Both view showing, double-clicking a line of clean text
   opens an editor over it (Enter keeps, Esc cancels, one line at a time, no
@@ -212,8 +213,9 @@ space, `data-frame` groups, `step()` and stable step keys stay the same.
 | Watercolor Blueprint | an exploded technical plate in ink and grey-blue watercolour on cream paper | `styles/watercolor-blueprint.md` | `scripts/watercolor_blueprint.py` |
 | Pen & Marker | a designer's marker rendering: wobbly fineliner, streaky marker fills, highlighter swipes | `styles/pen-and-marker.md` | `scripts/pen_marker.py` |
 
-Every kit has `theme_page(html, title)` for step 1 and `inject(html,
-groups)` for the clean layer, and draws plain SVG strings. A style's fonts
+Every kit has `theme_page(html, title)` for step 1, `inject(html, groups,
+motion="glide")` for the clean layer (see "Motion") and `depth(z, svg)`, and
+draws plain SVG strings. A style's fonts
 come from the page's Google Fonts link, which `theme_page` extends; the
 page loads them from there and the downloads embed them.
 
@@ -240,6 +242,35 @@ when the user asks for a poster, an overview to zoom into, or "Prezi".
   name it ("Empty slide" otherwise).
 - Use no build steps in a poster deck: steps hide content on every slide at
   or after the current one, so nested slides would show blanks.
+
+## Motion
+
+How the camera moves while presenting, in the page's Present and in the
+downloaded presentation. Every kit's `inject(html, groups, motion=...)` sets
+it on the clean layer (`<g id="clean" data-motion="depth">`); the downloads
+carry it along.
+
+- `glide` (the default): the camera zooms and pans between frames as one
+  flat canvas.
+- `depth`: a flight through layers. While the camera flies, each layer moves
+  at its own pace: nearer layers race ahead and farther ones lag, and the
+  view tilts a little with the motion. Every layer lines up again when the
+  camera arrives, so a slide at rest looks exactly as drawn, and the editing
+  canvas and the Inkscape drawing are flat as always. Build steps rise a
+  little into place as they appear.
+  - Slides whose frame sits inside another slide's frame (a poster's parts)
+    float one level (0.8) above it per frame around them. No tagging is
+    needed for a poster.
+  - Within a slide, wrap parts in `depth(z, svg)` (in every kit): `z` from
+    -2.5 (far behind) to 2.5 (near), 0 being the slide. Good uses: a
+    background panel or wash at -1, the diagram or drawing at 0.5-1, the
+    title or a callout nearest. Keep body text at 0 and use two or three
+    levels per slide, not one per item. `depth()` can hold steps or sit
+    inside one, and it does nothing under `glide`.
+- Use `depth` when the user asks for depth, parallax, 3D or a more
+  cinematic camera, and suggest it for posters. A deck keeps its motion on
+  every redraw: pass the same `motion` each time. Both motions respect the
+  viewer's reduced-motion setting (no flights at all).
 
 ## 5. Check, publish, report
 
