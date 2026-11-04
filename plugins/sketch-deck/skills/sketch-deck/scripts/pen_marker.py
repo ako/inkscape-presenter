@@ -14,7 +14,7 @@ Usage (from a deck script, next to slide_kit.py):
 """
 import html, math, random
 import slide_kit
-from slide_kit import LOCAL_W, depth
+from slide_kit import LOCAL_W, depth, narrate, step
 
 R = random.Random(11)
 E = html.escape

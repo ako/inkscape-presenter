@@ -1806,6 +1806,8 @@ function buildExportSvg(){
     L.setAttribute('data-sd-slide', i + 1);
     L.setAttribute('data-sd-frame', [f.x, f.y, f.w, f.h].map(r1).join(' '));
     exTitle(L, slideTitle(f.id));
+    // narration (data-say on the slide group and on its steps) travels to the slide and step layers
+    const sayOf = el => el && el.getAttribute('data-say');
     const cgd = cleanGroupOf(f.id), sd = MOTION !== 'glide' && showClean && cgd ? slideDepth(cgd) : 0;
     if (sd) L.setAttribute('data-depth', +sd.toFixed(3));
     const steps = activeSteps(f.id), stepOf = new Map();
@@ -1813,6 +1815,7 @@ function buildExportSvg(){
     const stepLayers = steps.map(() => exLayer(''));
     const cg = cleanGroupOf(f.id);
     if (showClean && cg && cg.style.display !== 'none'){
+      if (sayOf(cg)) L.setAttribute('data-sd-say', sayOf(cg));
       const stepEls = [...cg.querySelectorAll('[data-step]')].filter(el => stepOf.has(el));
       stepEls.forEach(el => el.setAttribute('data-sd-x', ''));
       const base = cg.cloneNode(true);
@@ -1837,6 +1840,8 @@ function buildExportSvg(){
       const name = steps[stepLayers.indexOf(g)].name;
       g.setAttributeNS(INK_NS, 'inkscape:label', `step ${k + 1}` + (name && !/^Step \d+$/.test(name) ? ` · ${name}` : ''));
       g.setAttribute('data-sd-step', k);
+      const said = showClean && steps[stepLayers.indexOf(g)].els.map(sayOf).find(Boolean);
+      if (said) g.setAttribute('data-sd-say', said);
       L.append(g);
     });
     out.append(L);
@@ -1902,7 +1907,8 @@ function sketchDeckPlayer(){
   /* ---- camera ---- */
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var cam = null, raf = 0, pos = 0, step = 0, hudTimer = 0;
-  function setCam(c, flying){ cam = c; svg.setAttribute('viewBox', [c.x, c.y, c.w, c.h].join(' ')); if (!flying) depthRest(); }
+  var inFlight = false;
+  function setCam(c, flying){ cam = c; svg.setAttribute('viewBox', [c.x, c.y, c.w, c.h].join(' ')); if (!flying){ inFlight = false; depthRest(); } }
   function frameView(f){ var w = f.w / 0.98, h = f.h / 0.98; return { x: f.x + f.w / 2 - w / 2, y: f.y + f.h / 2 - h / 2, w: w, h: h }; }
   // smooth zoom and pan (van Wijk and Nuij, 2003) between views [cx, cy, width]
   function zoom(p0, p1){
@@ -1983,11 +1989,12 @@ function sketchDeckPlayer(){
     var z = zoom([f.x + f.w / 2, f.y + f.h / 2, f.w], [t.x + t.w / 2, t.y + t.h / 2, t.w]);
     var dur = full ? Math.min(2400, Math.max(700, z.duration * 1.05)) : Math.min(2000, Math.max(550, z.duration * 0.85));
     var a0 = f.h / f.w, a1 = t.h / t.w, t0 = performance.now();
+    inFlight = true;
     function frame(now){
       var k = Math.min(1, (now - t0) / dur);
       if (k === 1){ setCam(t); return; }
       var e = ease(k), v = z(e), w = v[2], h = w * (a0 + (a1 - a0) * e);
-      setCam({ x: v[0] - w / 2, y: v[1] - h / 2, w: w, h: h }, deep);
+      setCam({ x: v[0] - w / 2, y: v[1] - h / 2, w: w, h: h }, true);
       if (deep) depthPut(z, e, now);
       raf = requestAnimationFrame(frame);
     }
@@ -2257,6 +2264,23 @@ function sketchDeckPlayer(){
   rebuild();
   var start = parseInt((location.hash || '').slice(1), 10);
   go(start > 0 ? start - 1 : 0, false, true);
+
+  /* ---- for scripts (the video renderer): the beats of this arrangement, in order, and a
+     way to step through them. A beat is a slide arriving, or one of its build steps;
+     "say" is its narration (data-sd-say), or "" ---- */
+  window.sketchDeck = {
+    beats: function(){
+      var out = [];
+      seq.forEach(function(s, i){
+        out.push({ slide: i, step: 0, title: s.title, say: s.g.getAttribute('data-sd-say') || '' });
+        s.steps.forEach(function(g, j){ out.push({ slide: i, step: j + 1, title: s.title, say: g.getAttribute('data-sd-say') || '' }); });
+      });
+      return out;
+    },
+    go: function(slide, step){ go(slide, false, true); while (step-- > 0) next(); },
+    next: next,
+    state: function(){ return { slide: pos, step: step, flying: inFlight }; }
+  };
 }
 const PLAYER_JS = '(' + sketchDeckPlayer + ')();';
 

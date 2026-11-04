@@ -109,6 +109,18 @@ def share():
 CARDS = [("pm-1", "Sketch", sketch), ("pm-2", "Say done", done), ("pm-3", "See", see),
          ("pm-4", "Draw", draw), ("pm-5", "Present", present), ("pm-6", "Share", share)]
 
+# narration, spoken as each slide arrives (deck_video.py turns the deck into a narrated video)
+SAY = {
+    "pm-poster": "Sketch Deck turns a rough sketch into a finished presentation.",
+    "pm-1": "You draw each slide by hand, and leave notes in orange for what you want.",
+    "pm-2": "Say done, and Claude reads every frame, stroke and note from the page.",
+    "pm-3": "It renders the sketch, so it can look at each slide before drawing it.",
+    "pm-4": "Then it draws every slide in the style you picked.",
+    "pm-5": "You present it right there: the camera flies from frame to frame.",
+    "pm-6": "Or download it, as one file to present anywhere, or a drawing for Inkscape.",
+    "pm-recap": "From a sketch to a finished deck, in one conversation.",
+}
+
 
 def poster():
     s = f'<rect x="0" y="0" width="{POSTER[2]}" height="{POSTER[3]}" fill="{PAPER}"/>'
@@ -132,13 +144,13 @@ def poster():
 
 def build(html_path):
     theme_page(html_path, TITLE)
-    groups = [group("pm-poster", "Sketch Deck", poster(), POSTER, POSTER[2])]
+    groups = [narrate(group("pm-poster", "Sketch Deck", poster(), POSTER, POSTER[2]), SAY["pm-poster"])]
     frames = [("pm-poster",) + POSTER + (10,)]
     for i, (fid, title, fn) in enumerate(CARDS):
         x, y = at(i)
-        groups.append(group(fid, title, fn(), (x, y, CW, CH)))
+        groups.append(narrate(group(fid, title, fn(), (x, y, CW, CH)), SAY[fid]))
         frames.append((fid, x, y, CW, CH, 20 + i * 10))
-    groups.append(group("pm-recap", "Recap", "", POSTER, POSTER[2]))
+    groups.append(narrate(group("pm-recap", "Recap", "", POSTER, POSTER[2]), SAY["pm-recap"]))
     frames.append(("pm-recap",) + POSTER + (90,))
     inject(html_path, groups, motion="depth")   # the full effect, as a showpiece; posters default to "subtle"
     return frames

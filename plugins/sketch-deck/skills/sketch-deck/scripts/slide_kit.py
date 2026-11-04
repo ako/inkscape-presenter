@@ -68,9 +68,16 @@ def textcol(n, label, title, body, x=1010, title_size=50, title_chars=15, body_s
     for l in wrap(body, body_chars): s.append(text(x, y, body_size, l, "b", MUT)); y += body_size * 1.5
     return "".join(s)
 
-def step(key, name, svg):
-    """A build step: revealed after the base when presenting."""
-    return f'<g data-step="{E(key)}" data-name="{E(name)}">{svg}</g>'
+def step(key, name, svg, say=None):
+    """A build step: revealed after the base when presenting. say: its narration line."""
+    s = f' data-say="{E(say)}"' if say else ''
+    return f'<g data-step="{E(key)}" data-name="{E(name)}"{s}>{svg}</g>'
+
+def narrate(group, say):
+    """Give a slide group (from slide(), or any kit's group()) the narration line spoken
+    when the slide arrives. Lines for its build steps go on step(..., say=...)."""
+    i = group.index('<g data-frame=') + len('<g')
+    return group[:i] + f' data-say="{E(say)}"' + group[i:]
 
 def depth(z, svg):
     """A layer for the subtle and depth motions (inject(..., motion=...)): z from -2.5 (far

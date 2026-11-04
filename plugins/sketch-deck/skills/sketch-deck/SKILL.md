@@ -1,6 +1,6 @@
 ---
 name: sketch-deck
-description: "Sketch Deck: the user sketches slides with a pen, typed notes and reference images on a zoomable canvas artifact; Claude reads the sketch and draws the finished slides into the same page. Use when the user asks for a new sketch deck or a presentation to sketch, says a sketch deck is done or updated, or asks to change how a Sketch Deck page works."
+description: "Sketch Deck: the user sketches slides with a pen, typed notes and reference images on a zoomable canvas artifact; Claude reads the sketch and draws the finished slides into the same page. Use when the user asks for a new sketch deck or a presentation to sketch, says a sketch deck is done or updated, asks for a narrated video of a sketch deck, or asks to change how a Sketch Deck page works."
 ---
 
 # Sketch Deck
@@ -84,6 +84,8 @@ Paths are relative to the directory of this SKILL.md.
 
 - `template/sketch-deck.html`: the page, with an empty clean layer. Every
   deck starts as a copy of it.
+- `scripts/deck_video.py`: renders a downloaded presentation as a narrated
+  video (see "Video").
 - `scripts/sketch_render.py`: renders a database export to PNGs and a
   manifest.
 - `scripts/slide_kit.py`: draws finished slides in the house style, and
@@ -284,6 +286,48 @@ other decks, and `depth` or `subtle` wherever the user asks for depth,
 parallax or 3D. A deck keeps its motion on every redraw: pass the same
 `motion` each time. All motions respect the viewer's reduced-motion setting
 (no flights at all).
+
+## Video
+
+A deck becomes a narrated video: the camera's flights and build steps,
+with a voice-over line per beat (a slide arriving, or one of its build
+steps).
+
+1. Write the narration into the deck script. `narrate(group, line)` (in
+   every kit) gives a slide its line, spoken as it arrives; `step(key, name,
+   svg, say=line)` gives a build step its line. They are `data-say`
+   attributes in the clean layer, so the page and both downloads carry
+   them, and every redraw must pass them again. A beat with no line is held
+   without voice.
+   - Present tense, about the viewer's or a named person's task ("Sam
+     logs the call"), never about how the deck was made. One or two short
+     sentences per beat, about 135 words per minute; plan 60-120 seconds
+     for a whole video.
+   - Write words as they should sound: spell out symbols (`->`, `≠`, `✓`)
+     and acronyms the voice would misread, in the narration only.
+2. Publish the deck, then get the presentation: open the page and use
+   Download → Presentation, or build it locally the way `examples/build.py`
+   does, in the Clean view. For a particular audience, arrange the slides
+   in the presentation's slide navigator and use its "Save copy": the
+   video follows the arrangement built into the file.
+3. Run `python3 deck_video.py presentation.html -o <deck>.mp4`. It plays
+   the presentation on a virtual clock and captures every frame, so flights
+   and fades are exact. It voices each line (Kokoro, voice `bm_george`),
+   measures it, and holds each beat for the line plus a pause (at least
+   2.5 seconds), so the picture is timed from the voice. It stops when a
+   line comes out missing or too short. `--no-voice` makes a silent video
+   timed by `--hold`.
+   - It needs ffmpeg and ffprobe, Playwright with Chromium, and for the
+     voice `pip install kokoro-onnx soundfile`. The voice model (about 350
+     MB) is downloaded on first use into `~/.cache/sketch-deck/kokoro`.
+   - It renders at about a quarter of real time at 1920x1080 (a one-minute
+     video takes about four minutes).
+4. Look at `<deck>.sheet.png` (one frame from the middle of every beat)
+   and read `<deck>.timeline.json` before sharing: each tile should show
+   its beat, and every line should have its own start and length.
+5. Give the user the video file, with its length and number of beats.
+   Prefer the `glide` or `subtle` motion for videos; `depth` over a whole
+   video is a lot.
 
 ## 5. Check, publish, report
 

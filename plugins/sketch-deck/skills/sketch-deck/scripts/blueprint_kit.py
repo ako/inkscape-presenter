@@ -9,7 +9,7 @@ template, then build groups with panel()/group() and inject() them.
 """
 import html
 import slide_kit
-from slide_kit import depth
+from slide_kit import depth, narrate
 E = html.escape
 LW, LH = 1679.2, 944.5
 
@@ -110,8 +110,9 @@ def panel(n, label, title, body, card=True):
     return s + body
 
 
-def step(key, name, svg):
-    return f'<g data-step="{E(key)}" data-name="{E(name)}">{svg}</g>'
+def step(key, name, svg, say=None):
+    s = f' data-say="{E(say)}"' if say else ''
+    return f'<g data-step="{E(key)}" data-name="{E(name)}"{s}>{svg}</g>'
 
 
 def group(fid, title, inner, frame):
