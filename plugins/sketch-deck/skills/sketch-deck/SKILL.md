@@ -24,6 +24,17 @@ Playwright and Chromium (`pip install playwright`, then
   Space). Paste or drop images as references. Select moves, resizes,
   deletes, duplicates, copies and pastes. Moving a frame carries everything
   inside it: sketch items, nested detail frames and Claude's finished slide.
+  Copying, cutting or duplicating a frame takes the same along, with its
+  build steps.
+- Copy and paste work between decks: Ctrl+C on frames in one Sketch Deck,
+  Ctrl+V in another. The clipboard carries everything as text
+  (`sketchdeck:v1` and JSON, images as data: URIs). The receiving deck uploads
+  the images to its own storage and keeps a pasted finished slide in
+  `cleanPaste/<frameId>` = `{html, attrs, fonts, t}`: the slide's markup
+  (sanitized: no scripts, handlers, links or outside requests), its
+  `data-*` attributes (title, narration) and the Google Fonts it needs. The
+  page draws it on its frame, adds its fonts, and keeps its style sheet to
+  that slide, until Claude writes it into the page on the next redraw.
 - Slides panel (S): insert a slide after any slide, delete one with its
   content, reorder by drag or arrows, add at the end. With "Keep grid" on,
   every change renumbers the slides and re-flows the grid (Columns setting).
@@ -123,10 +134,11 @@ next to `skills/`.
 
 ## 2. Read the sketch ("done" / "updated")
 
-1. Export all four collections with `ArtifactData` `action: "list"`,
+1. Export the collections with `ArtifactData` `action: "list"`,
    `query: {"limit": 1000}` and the same `out_dir` (e.g. `export`):
-   `frames`, `strokes`, `texts`, `images`, and `cleanEdits` (the user's
-   edits to finished text). Follow `next_cursor` if present.
+   `frames`, `strokes`, `texts`, `images`, `cleanEdits` (the user's
+   edits to finished text) and `cleanPaste` (finished slides pasted from
+   other decks). Follow `next_cursor` if present.
    Also list `steps` when redrawing, to see which of your step keys the user
    reordered, renamed or merged. The last strokes arrive about a second
    after the user stops drawing; if a slide they mention looks unfinished,
@@ -176,7 +188,17 @@ the redraw is published, delete the baked `cleanEdits` documents with
 page doesn't list them as not applied. When an edit's `from` can't be found
 in that slide's code, keep its document and tell the user which edit it was
 and why. A redraw must never silently discard a user's edit. The same holds
-for every style. `slide()` sets `data-title`, which the
+for every style.
+
+Slides the user pasted from another deck (`pasted` on a frame in the
+manifest) are kept as they are: `load_pasted("export")` reads them, and
+`pasted_group(frame_id, doc, frame)` gives the group to pass to `inject`
+in that frame's place; then run `slide_kit.theme_page(html, title,
+fonts=pasted_fonts(docs))` after the style's own `theme_page`, so the page
+loads their fonts. Redraw one in the deck's own style only when the user asks, or when
+its sketch changed. After publishing, delete the baked `cleanPaste`
+documents with `if_version`, as for `cleanEdits`; until then the page's
+own group for that frame wins over the pasted one. `slide()` sets `data-title`, which the
 Slides panel shows. Keep the deck script in the working directory so the
 next "updated" can start from it.
 
