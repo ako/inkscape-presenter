@@ -19,12 +19,24 @@ into the same page, following the composition you sketched. You can then:
   time;
 * reorder, insert and delete slides, and order each slide's build steps;
 * switch between your sketch, Claude's slides, or both;
+* fix the text of a finished slide in place;
 * download the deck as a standalone HTML presentation, or as an SVG for
-  Inkscape.
+  Inkscape;
+* turn the deck into a narrated video.
 
-The downloaded presentation is one file that works without claude.ai. Its
-slide navigator (S) lets you hide and reorder slides for an audience, and
-save that version as its own file.
+The downloaded presentation is one file that works offline, without
+claude.ai: its images and fonts are embedded. Its slide navigator (S) lets
+you hide and reorder slides for an audience, and save that version as its
+own file.
+
+Presenting flies the camera from frame to frame. Poster decks get a subtle
+sense of depth as the camera flies, with parts of the drawing moving as
+layers; a fuller depth effect is there when you ask for it.
+
+When the sketch is a product, its screens or a user journey, Claude can add
+pixel-perfect impressions of the screens: real HTML screens, photographed
+and placed on the slides in a phone or browser frame, so the deck shows the
+sketch turning into the product.
 
 Claude draws in a clean house style by default, or in one of three named
 styles: **Blueprint** (an engineering drawing on a navy grid), **Watercolor
@@ -36,7 +48,8 @@ poster you zoom into.
 
 Sketch Deck runs on claude.ai artifacts: the canvas saves to the artifact's
 database, so it needs Claude with the Artifact tools. The helper scripts need
-Python 3 with Playwright and Chromium.
+Python 3 with Playwright and Chromium; videos also need ffmpeg and, for the
+voice, `kokoro-onnx` and `soundfile`.
 
 Install it in Claude Code from this repository's plugin marketplace:
 
@@ -52,12 +65,13 @@ skill in the settings.
 * `plugins/sketch-deck/skills/sketch-deck/`: the skill. `SKILL.md` tells
   Claude how to run it, `template/sketch-deck.html` is the canvas page every
   deck starts from, and `scripts/` holds the helpers that render a sketch for
-  Claude and draw the finished slides.
+  Claude, draw the finished slides, photograph UI screens (`ui_kit.py`) and
+  render a narrated video (`deck_video.py`).
 * `plugins/sketch-deck/skills/sketch-deck/styles/`: how Claude draws in each
   named style; the matching kits are in `scripts/`.
 * `plugins/sketch-deck/examples/`: a poster explaining Sketch Deck in each of
-  the three styles, and a hand-drawn example deck, each as a standalone
-  presentation and an Inkscape SVG.
+  the three styles, a product journey with UI impressions, and a hand-drawn
+  example deck, each as a standalone presentation and an Inkscape SVG.
 
 ## How Inkscape presenter fits in
 

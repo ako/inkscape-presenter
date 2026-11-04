@@ -227,7 +227,7 @@ body.present .stroke.note,body.present .tnote.note,body.present #images,body.pre
     <li><b>Frame</b> each slide (F, then drag). Frames are numbered in the order you draw them.</li>
     <li>Use the <b style="color:#f0875a">orange note pen</b>, or <b>Text</b> (T) to type, for instructions, like "bar chart here" or "use our logo". Notes don't show when presenting.</li>
     <li><b>Paste</b> (Ctrl+V) or drop images as examples of the look you want. They're references for Claude and don't show when presenting.</li>
-    <li><b>Select</b> (V) to move, resize, delete or duplicate. Moving a frame takes its content along.</li>
+    <li><b>Select</b> (V) to move, resize, delete or duplicate. Moving a frame takes its content along. <b>Copy</b> frames (Ctrl+C) to paste them, finished slides included, into another Sketch Deck.</li>
     <li><b>Slides</b> (S) to insert, delete and reorder slides; the grid re-flows and renumbers. <b>Steps</b> (L) to order what appears when on a slide.</li>
     <li>When you're done, tell Claude in the chat to turn the sketch into visuals.</li>
     <li>Double-click the text of a finished slide (Select, V) to fix a word or a number; Enter keeps it, Esc cancels.</li>
@@ -594,6 +594,12 @@ const saveSettings = () => write(() => db.collection('meta').doc('settings').set
     });
     applyCleanEdits();
   }, () => {});
+  db.collection('cleanPaste').onSnapshot(snap => {
+    snap.docChanges().forEach(ch => {
+      if (ch.type === 'removed'){ pasted.delete(ch.doc.id); removePasted(ch.doc.id); }
+      else { const d = ch.doc.data(); if (d && typeof d.html === 'string'){ pasted.set(ch.doc.id, d); renderPasted(ch.doc.id); } }
+    });
+  }, () => {});
   db.collection('meta').doc('settings').onSnapshot(d => {
     const v = d.exists ? d.data() : null;
     if (v){ settings.cols = v.cols || settings.cols; settings.grid = v.grid !== false; $('gridCols').value = String(settings.cols); $('keepGrid').checked = settings.grid; }
@@ -636,6 +642,8 @@ function undoOne(a){
     drawFrames();
   }
   if (a.kind === 'add-many'){
+    (a.steps || []).forEach(id => { stepDocs.delete(id); del('steps', id); });
+    (a.pasted || []).forEach(id => { pasted.delete(id); removePasted(id); del('cleanPaste', id); });
     a.strokes.forEach(id => { removeStroke(id); del('strokes', id); });
     a.frames.forEach(id => { frames.delete(id); del('frames', id); });
     (a.texts || []).forEach(id => { removeText(id); del('texts', id); });
@@ -688,6 +696,7 @@ function markSel(){
   texts.forEach((x, id) => x.el.classList.toggle('selected', sel.texts.has(id)));
   images.forEach((m, id) => m.el.classList.toggle('selected', sel.images.has(id)));
   drawSel(); updateSelBar(); refreshPanels();
+  if (typeof prefetchSelection === 'function') prefetchSelection();
 }
 function clearSel(){ sel.strokes.clear(); sel.frames.clear(); sel.texts.clear(); sel.images.clear(); markSel(); }
 function updateSelBar(){
@@ -793,28 +802,51 @@ function toggleKind(){
   if (before.strokes.length || before.texts.length) undo.push(before);
   updateSelBar();
 }
+// the selection plus everything inside its frames (nested frames, strokes, texts, images)
+function copyScope(){
+  const sc = { strokes: new Set(sel.strokes), frames: new Set(sel.frames), texts: new Set(sel.texts), images: new Set(sel.images) };
+  sel.frames.forEach(fid => { if (!frames.has(fid)) return; const c = contentOf(fid); ['strokes', 'frames', 'texts', 'images'].forEach(k => c[k].forEach(id => sc[k].add(id))); });
+  return sc;
+}
 function copySel(){
   if (!selCount()) return null;
+  const sc = copyScope();
   const items = { strokes: [], frames: [], texts: [], images: [] };
-  sel.strokes.forEach(id => { const s = strokes.get(id); if (s) items.strokes.push(strokeData(s)); });
-  sel.frames.forEach(id => { const f = frames.get(id); if (f) items.frames.push({ ...f }); });
-  sel.texts.forEach(id => { const x = texts.get(id); if (x) items.texts.push(textData(x)); });
-  sel.images.forEach(id => { const m = images.get(id); if (m && m.a) items.images.push(imgData(m)); });
+  sc.strokes.forEach(id => { const s = strokes.get(id); if (s) items.strokes.push(strokeData(s)); });
+  sc.frames.forEach(id => { const f = frames.get(id); if (f) items.frames.push({ id, x: f.x, y: f.y, w: f.w, h: f.h, t: f.t }); });
+  sc.texts.forEach(id => { const x = texts.get(id); if (x) items.texts.push(textData(x)); });
+  sc.images.forEach(id => { const m = images.get(id); if (m && m.a) items.images.push({ ...imgData(m), src: m.src }); });
   const b = selBox(); items.box = b ? { x: b.x, y: b.y } : { x: 0, y: 0 };
   return items;
 }
+// Paste copied items, moved by (dx, dy). Frames bring their build steps and Claude's finished
+// slide (items.clean, from clipPayload); from another deck, images are uploaded to this one.
 function pasteItems(items, dx, dy){
-  const made = { kind: 'add-many', strokes: [], frames: [], texts: [], images: [] };
+  const here = !items.origin || items.origin === location.origin;
+  const made = { kind: 'add-many', strokes: [], frames: [], texts: [], images: [], steps: [], pasted: [] };
   sel.strokes = new Set(); sel.frames = new Set(); sel.texts = new Set(); sel.images = new Set();
-  items.strokes.forEach(s => { const nid = newId('strokes'), d = { c: s.c, w: s.w, p: s.p.map((v, i) => r1(v + (i % 2 ? dy : dx))) }; drawStroke(nid, d); saveStroke(nid, d); made.strokes.push(nid); sel.strokes.add(nid); });
-  items.frames.forEach((f, i) => { const nid = newId('frames'), d = { x: r1(f.x + dx), y: r1(f.y + dy), w: f.w, h: f.h, t: Date.now() + i }; frames.set(nid, d); saveFrame(nid, d); made.frames.push(nid); sel.frames.add(nid); });
-  items.texts.forEach(x => { const nid = newId('texts'), d = { ...x, L: undefined, x: r1(x.x + dx), y: r1(x.y + dy), t: Date.now() }; drawText(nid, d); saveText(nid, d); made.texts.push(nid); sel.texts.add(nid); });
-  items.images.forEach(m => { const nid = newId('images'), d = { ...m, L: undefined, x: r1(m.x + dx), y: r1(m.y + dy), t: Date.now() }; drawImage(nid, d); saveImage(nid, d); made.images.push(nid); sel.images.add(nid); });
+  const fmap = new Map();
+  items.strokes.forEach(s => { const nid = newId('strokes'), d = withL({ c: s.c, w: s.w, p: s.p.map((v, i) => r1(v + (i % 2 ? dy : dx))) }, s.L); drawStroke(nid, d); saveStroke(nid, d); made.strokes.push(nid); sel.strokes.add(nid); });
+  items.frames.forEach((f, i) => { const nid = newId('frames'), d = { x: r1(f.x + dx), y: r1(f.y + dy), w: f.w, h: f.h, t: Date.now() + i }; frames.set(nid, d); saveFrame(nid, d); made.frames.push(nid); sel.frames.add(nid); if (f.id) fmap.set(f.id, nid); });
+  items.texts.forEach(x => { const nid = newId('texts'), d = { ...x, x: r1(x.x + dx), y: r1(x.y + dy), t: Date.now() }; drawText(nid, d); saveText(nid, d); made.texts.push(nid); sel.texts.add(nid); });
+  items.images.forEach(m => {
+    const nid = newId('images'), d = withL({ x: r1(m.x + dx), y: r1(m.y + dy), w: m.w, h: m.h, a: here ? m.a : '', t: Date.now() }, m.L);
+    if (here){ drawImage(nid, d); saveImage(nid, d); }
+    else if (m.uri){ drawImage(nid, d, m.uri); uploadImage(nid, d, dataUriBlob(m.uri)); }
+    else return;
+    made.images.push(nid); sel.images.add(nid);
+  });
+  Object.entries(items.steps || {}).forEach(([fid, doc]) => {
+    const nid = fmap.get(fid); if (!nid) return;
+    const d = { order: [...(doc.order || [])], names: { ...(doc.names || {}) }, off: [...(doc.off || [])] };
+    stepDocs.set(nid, d); saveSteps(nid, d); made.steps.push(nid);
+  });
+  (items.clean || []).forEach(c => { const nid = fmap.get(c.fid); if (nid){ made.pasted.push(nid); pasteClean(nid, c, here); } });
   drawFrames(); undo.push(made); if (tool !== 'select') setToolKeepSel('select'); markSel(); setStatus();
 }
 function duplicateSel(){
   const items = copySel(); if (!items) return;
-  const off = pxToWorld(24); pasteItems(items, off, off);
+  const off = pxToWorld(24); pasteItems(clipPayload(items).data, off, off);
 }
 function shiftFrame(dir){
   if (sel.frames.size !== 1) return;
@@ -1330,34 +1362,48 @@ async function addImageFile(file, at, i){
   const id = newId('images'), d = { x: r1(at.x - w / 2 + off), y: r1(at.y - h / 2 + off), w, h, a: '', t: Date.now() };
   const localUrl = URL.createObjectURL(s.blob);
   drawImage(id, d, localUrl); setStatus();
-  if (!assets){ drawImage(id, { ...d, local: true }, localUrl); flash('Image shown here only: this view cannot upload files'); return; }
+  if (await uploadImage(id, d, s.blob)) undo.push({ kind: 'add-image', id });
+}
+async function uploadAsset(blob){
+  try { return await assets.upload(blob); }
+  catch (e){ if (e && e.code === 'store_unavailable'){ await new Promise(r => setTimeout(r, 800)); return await assets.upload(blob); } throw e; }
+}
+// upload an image already drawn as `id` and save it; false (and the image removed) when it can't be
+async function uploadImage(id, d, blob){
+  if (!assets){ drawImage(id, { ...d, local: true }, images.get(id)?.src); flash('Image shown here only: this view cannot upload files'); return false; }
   pending++; setStatus();
   try {
-    let res;
-    try { res = await assets.upload(s.blob); }
-    catch (e){ if (e && e.code === 'store_unavailable'){ await new Promise(r => setTimeout(r, 800)); res = await assets.upload(s.blob); } else throw e; }
-    if (!images.has(id)){ pending--; setStatus(); return; }   // removed while uploading
+    const res = await uploadAsset(blob);
+    if (!images.has(id)) return false;   // removed while uploading
     const nd = { ...d, a: res.id };
-    drawImage(id, nd, res.url); saveImage(id, nd); undo.push({ kind: 'add-image', id });
+    drawImage(id, nd, res.url); saveImage(id, nd);
+    return true;
   } catch (e){
     removeImage(id);
     flash(e && e.code === 'too_large' ? 'That image is too large' : e && e.code === 'quota_or_state' ? 'Image storage is full' : 'Upload failed. Try again.');
-  }
-  pending--; setStatus();
+    return false;
+  } finally { pending--; setStatus(); }
+}
+function dataUriBlob(uri){
+  const [head, body] = uri.split(','), type = (head.match(/^data:([^;,]+)/) || [])[1] || 'application/octet-stream';
+  const bin = head.includes(';base64') ? atob(body) : decodeURIComponent(body);
+  const u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return new Blob([u8], { type });
 }
 function pastePoint(){ return lastPointer ? toWorld(...lastPointer) : { x: cam.x, y: cam.y }; }
-window.addEventListener('copy', e => {
+function copyToClipboard(e, cut){
   if (editing || present || e.target.closest?.('input,textarea')) return;
   const items = copySel(); if (!items) return;
-  clip = items; clipMarker = 'sketchdeck:' + Date.now();
-  e.clipboardData.setData('text/plain', clipMarker); e.preventDefault();
-});
-window.addEventListener('cut', e => {
-  if (editing || present || e.target.closest?.('input,textarea')) return;
-  const items = copySel(); if (!items) return;
-  clip = items; clipMarker = 'sketchdeck:' + Date.now();
-  e.clipboardData.setData('text/plain', clipMarker); e.preventDefault(); deleteSel();
-});
+  const { text, data, missing } = clipPayload(items);
+  clip = data; clipMarker = text;
+  e.clipboardData.setData('text/plain', text); e.preventDefault();
+  const nf = items.frames.length;
+  flashStatus((cut ? 'Cut ' : 'Copied ') + (nf ? `${nf} frame${nf === 1 ? '' : 's'} with their content` : `${selCount()} item${selCount() === 1 ? '' : 's'}`)
+    + (missing ? ` · ${missing} image${missing === 1 ? '' : 's'} still loading: copy again to paste ${missing === 1 ? 'it' : 'them'} into another deck` : ' · paste here or in another Sketch Deck'));
+  if (cut){ const sc = copyScope(); ['strokes', 'frames', 'texts', 'images'].forEach(k => { sel[k] = sc[k]; }); deleteSel(); }   // a cut frame takes its content along
+}
+window.addEventListener('copy', e => copyToClipboard(e, false));
+window.addEventListener('cut', e => copyToClipboard(e, true));
 window.addEventListener('paste', e => {
   if (editing || present || e.target.closest?.('input,textarea')) return;
   const dt = e.clipboardData; if (!dt) return;
@@ -1365,10 +1411,11 @@ window.addEventListener('paste', e => {
   const at = pastePoint();
   if (files.length){ e.preventDefault(); files.forEach((f, i) => addImageFile(f, at, i)); return; }
   const text = dt.getData('text/plain');
-  if (clip && text === clipMarker){
+  const items = clip && text === clipMarker ? clip : readClip(text);
+  if (items){
     e.preventDefault();
-    const dx = at.x - clip.box.x, dy = at.y - clip.box.y;
-    pasteItems(clip, r1(dx), r1(dy)); return;
+    const dx = at.x - items.box.x, dy = at.y - items.box.y;
+    pasteItems(items, r1(dx), r1(dy)); return;
   }
   if (text && text.trim()){
     e.preventDefault();
@@ -1718,13 +1765,141 @@ function setView(v){
 }
 if (cleanG.children.length){ $('viewSeg').hidden = false; setView('clean'); } else setView('sketch');
 
+/* ---------------- copy and paste between decks ----------------
+   A copy is written to the clipboard as text: "sketchdeck:v1" and JSON with the items, the
+   frames' build steps and Claude's finished slides, and the images as data: URIs, so another
+   Sketch Deck can paste it. Images are read ahead while they are selected, because a copy
+   has to be written at once. Pasted finished slides are kept in cleanPaste/<frameId> =
+   {html, attrs, fonts, t} until Claude writes them into the page on its next redraw. */
+const CLIP_HEAD = 'sketchdeck:v1\n';
+const readyUris = new Map();   // absolute url -> data: URI, filled while things are selected
+const absUrl = u => { try { return new URL(u, location.href).href; } catch (e) { return u; } };
+const hrefOf = el => el.getAttribute('href') || el.getAttributeNS('http://www.w3.org/1999/xlink', 'href') || '';
+function prefetchUri(u){
+  if (!u || u.startsWith('data:') || u.startsWith('#')) return;
+  const a = absUrl(u); if (readyUris.has(a)) return;
+  toDataUri(a).then(d => { if (d) readyUris.set(a, d); });
+}
+function prefetchSelection(){
+  if (!sel.frames.size && !sel.images.size) return;
+  const sc = copyScope();
+  sc.images.forEach(id => { const m = images.get(id); if (m) prefetchUri(m.src); });
+  sc.frames.forEach(fid => { const g = cleanGroupOf(fid); if (g) g.querySelectorAll('image').forEach(im => prefetchUri(hrefOf(im))); });
+}
+// a finished slide as markup without its placement, with the defs it uses from outside it
+function cleanCopy(fid){
+  const g = cleanGroupOf(fid);
+  if (!g || g.style.display === 'none') return null;
+  let missing = 0;
+  const c = exTidy(g.cloneNode(true)), uris = {};
+  c.querySelectorAll('image').forEach(im => {   // this deck's images, readable by another deck as data: URIs
+    const u = hrefOf(im); if (!u || u.startsWith('data:') || uris[u]) return;
+    const d = readyUris.get(absUrl(u));
+    if (d) uris[u] = d; else missing++;
+  });
+  const ids = new Set(), inside = new Set([...c.querySelectorAll('[id]')].map(n => n.id));
+  [c, ...c.querySelectorAll('*')].forEach(n => [...n.attributes].forEach(a => {
+    for (const m of a.value.matchAll(/url\(\s*['"]?#([^'")\s]+)/g)) ids.add(m[1]);
+    if (/(^|:)href$/.test(a.name) && a.value.startsWith('#')) ids.add(a.value.slice(1));
+  }));
+  const defs = [...ids].filter(id => !inside.has(id)).map(id => document.getElementById(id)).filter(n => n && !g.contains(n));
+  const attrs = {};
+  [...c.attributes].forEach(a => { if (!['data-frame', 'transform', 'style', 'data-pasted', 'class'].includes(a.name)) attrs[a.name] = a.value; });
+  const ser = new XMLSerializer();
+  let html = [...c.childNodes].map(n => ser.serializeToString(n)).join('');
+  if (defs.length) html = '<defs xmlns="http://www.w3.org/2000/svg">' + defs.map(d => ser.serializeToString(d)).join('') + '</defs>' + html;
+  return { fid, attrs, html, uris, missing };
+}
+function clipPayload(items){
+  let missing = 0;
+  const data = { ...items, origin: location.origin, fonts: FONTS_URL, steps: {}, clean: [] };
+  data.images = items.images.map(m => { const d = readyUris.get(absUrl(m.src)); if (!d) missing++; return { ...m, uri: d || '' }; });
+  items.frames.forEach(f => {
+    if (stepDocs.has(f.id)) data.steps[f.id] = stepDocs.get(f.id);
+    const c = cleanCopy(f.id); if (c){ missing += c.missing; delete c.missing; c.fonts = FONTS_URL; data.clean.push(c); }
+  });
+  return { text: CLIP_HEAD + JSON.stringify(data), data, missing };
+}
+function readClip(text){
+  if (!text || !text.startsWith(CLIP_HEAD)) return null;
+  try {
+    const d = JSON.parse(text.slice(CLIP_HEAD.length));
+    return d && Array.isArray(d.frames) && Array.isArray(d.strokes) && Array.isArray(d.texts) && Array.isArray(d.images) && d.box ? d : null;
+  } catch (e) { return null; }
+}
+// what pasted markup may hold: drawing only, no scripts, handlers, embedded documents or outside links
+const BAD_TAGS = new Set(['script', 'foreignobject', 'iframe', 'object', 'embed', 'a', 'animate', 'set', 'animatemotion', 'animatetransform', 'handler', 'listener']);
+function sanitizeSvg(root){
+  [...root.querySelectorAll('*')].forEach(n => { if (BAD_TAGS.has(n.localName.toLowerCase())) n.remove(); });
+  [root, ...root.querySelectorAll('*')].forEach(n => [...n.attributes].forEach(a => {
+    const v = a.value.trim().toLowerCase();
+    if (/^on/i.test(a.name)) n.removeAttribute(a.name);
+    else if (/(^|:)href$/.test(a.name) && !(v.startsWith('#') || v.startsWith('data:image/') || v.startsWith('/_blob/')))
+      n.removeAttributeNS(a.namespaceURI, a.localName);
+    else if (a.name === 'style' && /url\(\s*['"]?\s*(?!#)/.test(v)) n.removeAttribute(a.name);
+  }));
+  // style sheets may style the drawing but load nothing
+  root.querySelectorAll('style').forEach(st => { st.textContent = st.textContent.replace(/@import[^;]*;?/gi, '').replace(/url\(\s*['"]?\s*(?!#|data:)[^)]*\)/gi, 'none'); });
+  return root;
+}
+const pasted = new Map();   // frameId -> cleanPaste doc
+function removePasted(fid){ cleanG.querySelectorAll(':scope > g[data-pasted]').forEach(g => { if (g.dataset.frame === fid) g.remove(); }); }
+function renderPasted(fid){
+  removePasted(fid);
+  const doc = pasted.get(fid);
+  if (!doc || cleanGroupOf(fid)) return;   // the page's own slide for this frame wins
+  const parsed = new DOMParser().parseFromString('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">' + (doc.html || '') + '</svg>', 'image/svg+xml');
+  if (parsed.querySelector('parsererror')) return;
+  const g = document.createElementNS(NS, 'g');
+  Object.entries(doc.attrs || {}).forEach(([k, v]) => { if (/^(data-[\w-]+|aria-[\w-]+|role)$/.test(k) && typeof v === 'string') g.setAttribute(k, v); });
+  g.setAttribute('data-frame', fid); g.setAttribute('data-pasted', '');
+  [...parsed.documentElement.childNodes].forEach(n => g.append(document.importNode(n, true)));
+  sanitizeSvg(g);
+  // a pasted slide's style sheets apply to that slide only
+  const scope = `#clean > g[data-frame="${CSS.escape(fid)}"]`;
+  g.querySelectorAll('style').forEach(st => { st.textContent = st.textContent.replace(/(^|})\s*([^{}@]+)\{/g, (m, end, sels) => end + ' ' + sels.split(',').map(x => scope + ' ' + x.trim()).join(', ') + '{'); });
+  cleanG.append(g);
+  mergeFonts(doc.fonts);
+  syncClean(); assignTids(); applyCleanEdits(); applyVisibility();
+  if ($('viewSeg').hidden){ $('viewSeg').hidden = false; setView('clean'); }
+}
+// store a copied finished slide for frame fid; from another deck its images are uploaded here first
+async function pasteClean(fid, c, here){
+  let html = c.html;
+  const swap = async (from, uri) => { try { const res = await uploadAsset(dataUriBlob(uri)); html = html.split(`href="${from}"`).join(`href="/_blob/${res.id}"`); } catch (e) {} };
+  if (assets){
+    // another deck's images become this deck's assets; images written into the slide are
+    // uploaded too, so the stored slide stays small
+    if (!here) for (const [u, d] of Object.entries(c.uris || {})) await swap(u.replace(/&/g, '&amp;'), d);
+    for (const u of new Set([...html.matchAll(/href="(data:image\/[^"]+)"/g)].map(m => m[1]))) await swap(u, u);
+  }
+  if (!frames.has(fid)) return;   // undone while uploading
+  const doc = { html, attrs: c.attrs || {}, fonts: c.fonts || clip?.fonts || '', t: Date.now() };
+  if (JSON.stringify(doc).length > 250000){ flash('That finished slide is too large to paste: ask Claude to copy it into this deck'); return; }
+  pasted.set(fid, doc); renderPasted(fid);
+  write(() => db.collection('cleanPaste').doc(fid).set(doc));
+}
+
 /* ---------------- download: standalone presentation (.html), drawing for Inkscape (.svg) ---------------- */
 // Both exports show what Present shows in the current Sketch / Both / Clean
 // view: each slide is an Inkscape layer "slide N" whose build steps are
 // sublayers "step N"; frames and notes go into hidden layers.
 const INK_NS = 'http://www.inkscape.org/namespaces/inkscape';
 const SODI_NS = 'http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd';
-const FONTS_URL = (document.querySelector('link[href*="fonts.googleapis.com/css2"]') || {}).href || '';
+let FONTS_URL = (document.querySelector('link[href*="fonts.googleapis.com/css2"]') || {}).href || '';
+// add the Google Fonts families of another css2 URL (a pasted slide's) to this page and its downloads
+function mergeFonts(url){
+  if (!url || !/^https:\/\/fonts\.googleapis\.com\/css2\?/.test(url)) return;
+  const fams = u => u ? new URL(u).searchParams.getAll('family') : [];
+  const have = fams(FONTS_URL), add = fams(url).filter(f => !have.some(h => h.split(':')[0] === f.split(':')[0]));
+  if (!add.length) return;
+  const q = new URLSearchParams(); [...have, ...add].forEach(f => q.append('family', f)); q.set('display', 'swap');
+  FONTS_URL = 'https://fonts.googleapis.com/css2?' + q.toString().replace(/%3A/g, ':').replace(/%3B/g, ';').replace(/%40/g, '@').replace(/%2C/g, ',');
+  fontCssText = null;
+  let link = document.querySelector('link[href*="fonts.googleapis.com/css2"]');
+  if (!link){ link = document.createElement('link'); link.rel = 'stylesheet'; document.head.append(link); }
+  link.href = FONTS_URL;
+}
 const EXPORT_CSS = '.d{font-family:"Unbounded","Arial Black",sans-serif;font-weight:700;fill:#1b2a33}'
   + '.d5{font-family:"Unbounded","Arial Black",sans-serif;font-weight:500;fill:#1b2a33}'
   + '.b{font-family:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;fill:#1b2a33}'
@@ -1806,6 +1981,8 @@ function buildExportSvg(){
     L.setAttribute('data-sd-slide', i + 1);
     L.setAttribute('data-sd-frame', [f.x, f.y, f.w, f.h].map(r1).join(' '));
     exTitle(L, slideTitle(f.id));
+    // narration (data-say on the slide group and on its steps) travels to the slide and step layers
+    const sayOf = el => el && el.getAttribute('data-say');
     const cgd = cleanGroupOf(f.id), sd = MOTION !== 'glide' && showClean && cgd ? slideDepth(cgd) : 0;
     if (sd) L.setAttribute('data-depth', +sd.toFixed(3));
     const steps = activeSteps(f.id), stepOf = new Map();
@@ -1813,6 +1990,7 @@ function buildExportSvg(){
     const stepLayers = steps.map(() => exLayer(''));
     const cg = cleanGroupOf(f.id);
     if (showClean && cg && cg.style.display !== 'none'){
+      if (sayOf(cg)) L.setAttribute('data-sd-say', sayOf(cg));
       const stepEls = [...cg.querySelectorAll('[data-step]')].filter(el => stepOf.has(el));
       stepEls.forEach(el => el.setAttribute('data-sd-x', ''));
       const base = cg.cloneNode(true);
@@ -1837,6 +2015,8 @@ function buildExportSvg(){
       const name = steps[stepLayers.indexOf(g)].name;
       g.setAttributeNS(INK_NS, 'inkscape:label', `step ${k + 1}` + (name && !/^Step \d+$/.test(name) ? ` · ${name}` : ''));
       g.setAttribute('data-sd-step', k);
+      const said = showClean && steps[stepLayers.indexOf(g)].els.map(sayOf).find(Boolean);
+      if (said) g.setAttribute('data-sd-say', said);
       L.append(g);
     });
     out.append(L);
@@ -1902,7 +2082,8 @@ function sketchDeckPlayer(){
   /* ---- camera ---- */
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var cam = null, raf = 0, pos = 0, step = 0, hudTimer = 0;
-  function setCam(c, flying){ cam = c; svg.setAttribute('viewBox', [c.x, c.y, c.w, c.h].join(' ')); if (!flying) depthRest(); }
+  var inFlight = false;
+  function setCam(c, flying){ cam = c; svg.setAttribute('viewBox', [c.x, c.y, c.w, c.h].join(' ')); if (!flying){ inFlight = false; depthRest(); } }
   function frameView(f){ var w = f.w / 0.98, h = f.h / 0.98; return { x: f.x + f.w / 2 - w / 2, y: f.y + f.h / 2 - h / 2, w: w, h: h }; }
   // smooth zoom and pan (van Wijk and Nuij, 2003) between views [cx, cy, width]
   function zoom(p0, p1){
@@ -1983,11 +2164,12 @@ function sketchDeckPlayer(){
     var z = zoom([f.x + f.w / 2, f.y + f.h / 2, f.w], [t.x + t.w / 2, t.y + t.h / 2, t.w]);
     var dur = full ? Math.min(2400, Math.max(700, z.duration * 1.05)) : Math.min(2000, Math.max(550, z.duration * 0.85));
     var a0 = f.h / f.w, a1 = t.h / t.w, t0 = performance.now();
+    inFlight = true;
     function frame(now){
       var k = Math.min(1, (now - t0) / dur);
       if (k === 1){ setCam(t); return; }
       var e = ease(k), v = z(e), w = v[2], h = w * (a0 + (a1 - a0) * e);
-      setCam({ x: v[0] - w / 2, y: v[1] - h / 2, w: w, h: h }, deep);
+      setCam({ x: v[0] - w / 2, y: v[1] - h / 2, w: w, h: h }, true);
       if (deep) depthPut(z, e, now);
       raf = requestAnimationFrame(frame);
     }
@@ -2257,6 +2439,23 @@ function sketchDeckPlayer(){
   rebuild();
   var start = parseInt((location.hash || '').slice(1), 10);
   go(start > 0 ? start - 1 : 0, false, true);
+
+  /* ---- for scripts (the video renderer): the beats of this arrangement, in order, and a
+     way to step through them. A beat is a slide arriving, or one of its build steps;
+     "say" is its narration (data-sd-say), or "" ---- */
+  window.sketchDeck = {
+    beats: function(){
+      var out = [];
+      seq.forEach(function(s, i){
+        out.push({ slide: i, step: 0, title: s.title, say: s.g.getAttribute('data-sd-say') || '' });
+        s.steps.forEach(function(g, j){ out.push({ slide: i, step: j + 1, title: s.title, say: g.getAttribute('data-sd-say') || '' }); });
+      });
+      return out;
+    },
+    go: function(slide, step){ go(slide, false, true); while (step-- > 0) next(); },
+    next: next,
+    state: function(){ return { slide: pos, step: step, flying: inFlight }; }
+  };
 }
 const PLAYER_JS = '(' + sketchDeckPlayer + ')();';
 

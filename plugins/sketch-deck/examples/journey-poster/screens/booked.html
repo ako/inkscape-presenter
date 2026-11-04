@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&display=swap">
+<link rel="stylesheet" href="ui.css">
+<style>
+  body { background: var(--surface); }
+  .done { margin: 92px auto 0; width: 96px; height: 96px; border-radius: 50%; background: var(--free-tint); display: grid; place-items: center; }
+  h1 { font: 700 28px/1.2 var(--font); text-align: center; margin-top: 26px; letter-spacing: -.02em; }
+  .lead { text-align: center; color: var(--muted); margin-top: 8px; font-size: 15px; }
+  .ticket { margin: 30px 20px 0; border: 1px solid var(--hairline); border-radius: 16px; background: var(--ground); }
+  .row { display: flex; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--hairline); font-size: 15px; }
+  .row:last-child { border-bottom: 0; }
+  .row span:first-child { color: var(--muted); }
+  .row span:last-child { font-weight: 600; }
+</style>
+<title>Booked</title></head>
+<body>
+<div class="status"><span>9:41</span><span class="icons"><span class="bat"></span></span></div>
+<div class="done"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#1f9d55" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+<h1>Harbour is yours</h1>
+<p class="lead">Priya and Tom have their invites.</p>
+<div class="ticket">
+  <div class="row"><span>When</span><span>Today, 13:00 – 14:00</span></div>
+  <div class="row"><span>Where</span><span>Harbour, floor 3</span></div>
+  <div class="row"><span>With</span><span>Priya, Tom</span></div>
+</div>
+<div class="foot"><div class="btn">Add to calendar</div><div class="btn ghost">Back to rooms</div></div>
+</body></html>

@@ -1,6 +1,6 @@
 ---
 name: sketch-deck
-description: "Sketch Deck: the user sketches slides with a pen, typed notes and reference images on a zoomable canvas artifact; Claude reads the sketch and draws the finished slides into the same page. Use when the user asks for a new sketch deck or a presentation to sketch, says a sketch deck is done or updated, or asks to change how a Sketch Deck page works."
+description: "Sketch Deck: the user sketches slides with a pen, typed notes and reference images on a zoomable canvas artifact; Claude reads the sketch and draws the finished slides into the same page. Use when the user asks for a new sketch deck or a presentation to sketch, says a sketch deck is done or updated, asks for pixel-perfect screens of a product sketched in a deck, asks for a narrated video of a sketch deck, or asks to change how a Sketch Deck page works."
 ---
 
 # Sketch Deck
@@ -24,6 +24,17 @@ Playwright and Chromium (`pip install playwright`, then
   Space). Paste or drop images as references. Select moves, resizes,
   deletes, duplicates, copies and pastes. Moving a frame carries everything
   inside it: sketch items, nested detail frames and Claude's finished slide.
+  Copying, cutting or duplicating a frame takes the same along, with its
+  build steps.
+- Copy and paste work between decks: Ctrl+C on frames in one Sketch Deck,
+  Ctrl+V in another. The clipboard carries everything as text
+  (`sketchdeck:v1` and JSON, images as data: URIs). The receiving deck uploads
+  the images to its own storage and keeps a pasted finished slide in
+  `cleanPaste/<frameId>` = `{html, attrs, fonts, t}`: the slide's markup
+  (sanitized: no scripts, handlers, links or outside requests), its
+  `data-*` attributes (title, narration) and the Google Fonts it needs. The
+  page draws it on its frame, adds its fonts, and keeps its style sheet to
+  that slide, until Claude writes it into the page on the next redraw.
 - Slides panel (S): insert a slide after any slide, delete one with its
   content, reorder by drag or arrows, add at the end. With "Keep grid" on,
   every change renumbers the slides and re-flows the grid (Columns setting).
@@ -84,6 +95,10 @@ Paths are relative to the directory of this SKILL.md.
 
 - `template/sketch-deck.html`: the page, with an empty clean layer. Every
   deck starts as a copy of it.
+- `scripts/ui_kit.py`: photographs HTML screens and puts them on slides in
+  a device frame (see "UI impressions").
+- `scripts/deck_video.py`: renders a downloaded presentation as a narrated
+  video (see "Video").
 - `scripts/sketch_render.py`: renders a database export to PNGs and a
   manifest.
 - `scripts/slide_kit.py`: draws finished slides in the house style, and
@@ -119,10 +134,11 @@ next to `skills/`.
 
 ## 2. Read the sketch ("done" / "updated")
 
-1. Export all four collections with `ArtifactData` `action: "list"`,
+1. Export the collections with `ArtifactData` `action: "list"`,
    `query: {"limit": 1000}` and the same `out_dir` (e.g. `export`):
-   `frames`, `strokes`, `texts`, `images`, and `cleanEdits` (the user's
-   edits to finished text). Follow `next_cursor` if present.
+   `frames`, `strokes`, `texts`, `images`, `cleanEdits` (the user's
+   edits to finished text) and `cleanPaste` (finished slides pasted from
+   other decks). Follow `next_cursor` if present.
    Also list `steps` when redrawing, to see which of your step keys the user
    reordered, renamed or merged. The last strokes arrive about a second
    after the user stops drawing; if a slide they mention looks unfinished,
@@ -172,7 +188,17 @@ the redraw is published, delete the baked `cleanEdits` documents with
 page doesn't list them as not applied. When an edit's `from` can't be found
 in that slide's code, keep its document and tell the user which edit it was
 and why. A redraw must never silently discard a user's edit. The same holds
-for every style. `slide()` sets `data-title`, which the
+for every style.
+
+Slides the user pasted from another deck (`pasted` on a frame in the
+manifest) are kept as they are: `load_pasted("export")` reads them, and
+`pasted_group(frame_id, doc, frame)` gives the group to pass to `inject`
+in that frame's place; then run `slide_kit.theme_page(html, title,
+fonts=pasted_fonts(docs))` after the style's own `theme_page`, so the page
+loads their fonts. Redraw one in the deck's own style only when the user asks, or when
+its sketch changed. After publishing, delete the baked `cleanPaste`
+documents with `if_version`, as for `cleanEdits`; until then the page's
+own group for that frame wins over the pasted one. `slide()` sets `data-title`, which the
 Slides panel shows. Keep the deck script in the working directory so the
 next "updated" can start from it.
 
@@ -241,7 +267,10 @@ when the user asks for a poster, an overview to zoom into, or "Prezi".
   poster already draws its content, so the Slides panel and the downloads
   name it ("Empty slide" otherwise).
 - Use no build steps in a poster deck: steps hide content on every slide at
-  or after the current one, so nested slides would show blanks.
+  or after the current one, so nested slides would show blanks. The one
+  exception is a step that covers something drawn under it, like a UI
+  impression laid over its sketched screen (see "UI impressions"): the
+  overview then shows the sketch, and the recap the finished screen.
 - Poster decks use the `subtle` motion (see "Motion") unless the user asks
   for another: `inject(..., motion="subtle")`. Nested slides that are
   drawn in their own groups (cards, panels) float above the poster on
@@ -284,6 +313,90 @@ other decks, and `depth` or `subtle` wherever the user asks for depth,
 parallax or 3D. A deck keeps its motion on every redraw: pass the same
 `motion` each time. All motions respect the viewer's reduced-motion setting
 (no flights at all).
+
+## UI impressions
+
+When the sketch is a product (screens, a user journey), Claude can add a
+layer of pixel-perfect screens: how the product would really look, in
+place of or next to the hand-drawn screens. The worked example is
+`examples/journey-poster/`: a Pen & Marker poster of one journey, a card
+per screen with the sketched wireframe and the designer's notes, and a
+build step that lays the real screen over the sketch.
+
+1. Write each screen as a standalone HTML page in `screens/<name>.html`,
+   at the device's size (`ui_kit.PHONE` 390 x 844, `TABLET`, `DESKTOP`
+   1440 x 900), with one shared stylesheet of design tokens
+   (`screens/ui.css`) so the screens read as one product. If the user names
+   a design system or brand, use its colours, type and components.
+   - Follow the sketch: its layout, its order, what each note asks for.
+   - Real, plausible content: names, times, amounts, statuses; every list
+     the screen shows is populated, every button and column has its label.
+     Never lorem ipsum, `test1` or an empty state unless the sketch asks
+     for one.
+   - Web fonts from Google Fonts are fine (they are fetched at render time
+     and end up in the picture); icons as inline SVG.
+2. In the deck script, `render_screens([Screen(name, path, size), ...])`
+   photographs them at 2x in headless Chromium and returns data: URIs (JPEG
+   by default; `fmt="png"` for exact flat colours). It stops when a screen
+   is wider than its device, has text cut off, a font or image that did not
+   load, or lorem ipsum; fix the HTML, don't pass `strict=False`.
+3. Place each with `device(uri, x, y, width, kind)`: `"phone"` (rounded
+   body, camera island), `"browser"` (window bar with `url`) or `"bare"`.
+   `device_height()` gives its height for layout. Two ways to show it:
+   - a build step over the sketched screen, with a card-coloured rect under
+     the device to hide the sketch's corners (the example's `card_slide`):
+     the sketch turns into the product as the presenter clicks;
+   - a nested frame next to or inside the sketch, to zoom into.
+4. The images live in the page as data: URIs (about 100 KB per phone
+   screen), so they work offline and in both downloads. Keep the screens'
+   HTML with the deck script: it is the spec for building the product, and
+   the next redraw renders it again.
+
+Narrate each screen's step with what it means for the user, not how it is
+built, so the deck becomes an impression film of the product (see
+"Video").
+
+## Video
+
+A deck becomes a narrated video: the camera's flights and build steps,
+with a voice-over line per beat (a slide arriving, or one of its build
+steps).
+
+1. Write the narration into the deck script. `narrate(group, line)` (in
+   every kit) gives a slide its line, spoken as it arrives; `step(key, name,
+   svg, say=line)` gives a build step its line. They are `data-say`
+   attributes in the clean layer, so the page and both downloads carry
+   them, and every redraw must pass them again. A beat with no line is held
+   without voice.
+   - Present tense, about the viewer's or a named person's task ("Sam
+     logs the call"), never about how the deck was made. One or two short
+     sentences per beat, about 135 words per minute; plan 60-120 seconds
+     for a whole video.
+   - Write words as they should sound: spell out symbols (`->`, `≠`, `✓`)
+     and acronyms the voice would misread, in the narration only.
+2. Publish the deck, then get the presentation: open the page and use
+   Download → Presentation, or build it locally the way `examples/build.py`
+   does, in the Clean view. For a particular audience, arrange the slides
+   in the presentation's slide navigator and use its "Save copy": the
+   video follows the arrangement built into the file.
+3. Run `python3 deck_video.py presentation.html -o <deck>.mp4`. It plays
+   the presentation on a virtual clock and captures every frame, so flights
+   and fades are exact. It voices each line (Kokoro, voice `bm_george`),
+   measures it, and holds each beat for the line plus a pause (at least
+   2.5 seconds), so the picture is timed from the voice. It stops when a
+   line comes out missing or too short. `--no-voice` makes a silent video
+   timed by `--hold`.
+   - It needs ffmpeg and ffprobe, Playwright with Chromium, and for the
+     voice `pip install kokoro-onnx soundfile`. The voice model (about 350
+     MB) is downloaded on first use into `~/.cache/sketch-deck/kokoro`.
+   - It renders at about a quarter of real time at 1920x1080 (a one-minute
+     video takes about four minutes).
+4. Look at `<deck>.sheet.png` (one frame from the middle of every beat)
+   and read `<deck>.timeline.json` before sharing: each tile should show
+   its beat, and every line should have its own start and length.
+5. Give the user the video file, with its length and number of beats.
+   Prefer the `glide` or `subtle` motion for videos; `depth` over a whole
+   video is a lot.
 
 ## 5. Check, publish, report
 

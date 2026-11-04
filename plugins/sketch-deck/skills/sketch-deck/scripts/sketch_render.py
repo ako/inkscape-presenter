@@ -5,7 +5,7 @@ Usage:
   python3 sketch_render.py EXPORT_DIR OUT_DIR [--assets ASSET_DIR]
 
 EXPORT_DIR is the out_dir used with ArtifactData list (one call per
-collection: frames, strokes, texts, images, and cleanEdits), so it contains
+collection: frames, strokes, texts, images, cleanEdits and cleanPaste), so it contains
 EXPORT_DIR/<collection>/<doc_id>.json. ASSET_DIR holds image files
 fetched with Artifact read (path = asset id); files are matched by the
 asset id at the start of their name.
@@ -13,8 +13,10 @@ asset id at the start of their name.
 Writes OUT_DIR/overview.png and OUT_DIR/frame-NN.png (NN = slide number,
 in presentation order), plus OUT_DIR/manifest.json, which lists every
 frame with the texts, images and stroke counts that fall inside it and the
-user's edits to its finished text (cleanEdits: tid, from, to), and the
-items outside any frame. Prints the manifest too.
+user's edits to its finished text (cleanEdits: tid, from, to), the
+finished slide the user pasted onto it from another deck (pasted: title,
+build steps, fonts; bake it with slide_kit.pasted_group), and the items
+outside any frame. Prints the manifest too.
 """
 import base64, glob, html, json, mimetypes, os, sys
 
@@ -52,6 +54,7 @@ def main():
     frames = load(export, 'frames'); strokes = load(export, 'strokes')
     texts = load(export, 'texts'); images = load(export, 'images')
     clean_edits = {k: (d.get('edits') or {}) for k, d in load(export, 'cleanEdits').items()}
+    pasted = load(export, 'cleanPaste')
     order = sorted(frames, key=lambda k: (frames[k].get('t', 0), k))
 
     def data_uri(asset):
@@ -117,7 +120,10 @@ def main():
                                    'texts': ts, 'images': ims, 'strokes': len(sts),
                                    'cleanEdits': [{'tid': tid, 'from': e.get('from'), 'to': e.get('to')}
                                                   for tid, e in clean_edits.get(k, {}).items()],
-                                   'note_strokes': sum(1 for s_ in sts if strokes[s_].get('c') == 'note')})
+                                   'note_strokes': sum(1 for s_ in sts if strokes[s_].get('c') == 'note'),
+                                   **({'pasted': {'title': (pasted[k].get('attrs') or {}).get('data-title', ''),
+                                                  'steps': pasted[k].get('html', '').count('data-step='),
+                                                  'fonts': pasted[k].get('fonts', '')}} if k in pasted else {})})
     manifest['outside']['texts'] = [{'id': k, 'text': t.get('text', '')} for k, t in texts.items() if k not in used_t]
     manifest['outside']['images'] = [{'id': k, 'asset': m.get('a')} for k, m in images.items() if k not in used_i]
     manifest['outside']['strokes'] = len([k for k in strokes if k not in used_s])

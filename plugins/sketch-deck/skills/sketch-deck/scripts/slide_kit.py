@@ -68,9 +68,44 @@ def textcol(n, label, title, body, x=1010, title_size=50, title_chars=15, body_s
     for l in wrap(body, body_chars): s.append(text(x, y, body_size, l, "b", MUT)); y += body_size * 1.5
     return "".join(s)
 
-def step(key, name, svg):
-    """A build step: revealed after the base when presenting."""
-    return f'<g data-step="{E(key)}" data-name="{E(name)}">{svg}</g>'
+def step(key, name, svg, say=None):
+    """A build step: revealed after the base when presenting. say: its narration line."""
+    s = f' data-say="{E(say)}"' if say else ''
+    return f'<g data-step="{E(key)}" data-name="{E(name)}"{s}>{svg}</g>'
+
+def load_pasted(export_dir):
+    """The finished slides the user pasted from other decks: {frame_id: doc} from the
+    cleanPaste collection of a database export (ArtifactData list with out_dir)."""
+    import glob, json, os
+    out = {}
+    for f in glob.glob(os.path.join(export_dir, 'cleanPaste', '*.json')):
+        d = json.load(open(f))
+        out[os.path.splitext(os.path.basename(f))[0]] = d.get('data', d)
+    return out
+
+def pasted_group(fid, doc, frame):
+    """A pasted slide (a cleanPaste doc) as a clean-layer group on frame (x, y, w, h), exactly
+    as the user pasted it: its markup, title, narration and build steps."""
+    x, y, w, h = frame[-4:] if len(frame) > 4 else frame
+    attrs = ''.join(f' {k}="{E(v)}"' for k, v in (doc.get('attrs') or {}).items()
+                    if re.fullmatch(r'data-[\w-]+|aria-[\w-]+|role', k) and k != 'data-frame')
+    return f'<g data-frame="{E(fid)}"{attrs} transform="translate({x} {y}) scale({w / LOCAL_W:.5f})">{doc.get("html", "")}</g>'
+
+def pasted_fonts(docs):
+    """The Google Fonts families (css2 'family=' values) the pasted slides need, for theme_page."""
+    from urllib.parse import urlparse, parse_qs
+    out = []
+    for d in docs.values():
+        u = d.get('fonts') or ''
+        if u.startswith('https://fonts.googleapis.com/css2?'):
+            out += [f for f in parse_qs(urlparse(u).query).get('family', []) if f not in out]
+    return out
+
+def narrate(group, say):
+    """Give a slide group (from slide(), or any kit's group()) the narration line spoken
+    when the slide arrives. Lines for its build steps go on step(..., say=...)."""
+    i = group.index('<g data-frame=') + len('<g')
+    return group[:i] + f' data-say="{E(say)}"' + group[i:]
 
 def depth(z, svg):
     """A layer for the subtle and depth motions (inject(..., motion=...)): z from -2.5 (far

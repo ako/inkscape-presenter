@@ -27,7 +27,7 @@ notes). Ids start with wb-. See styles/watercolor-blueprint.md.
 """
 import html, math
 import slide_kit
-from slide_kit import LOCAL_W, depth
+from slide_kit import LOCAL_W, depth, narrate, step
 
 E = html.escape
 INK = "#2b2f33"; SPEC = "#55606a"; OCH = "#d6a33a"; OCH_D = "#94690f"; WASH = "#8fa3b6"; WASH2 = "#b9c7d3"
