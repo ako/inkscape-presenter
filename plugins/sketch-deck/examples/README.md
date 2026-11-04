@@ -13,6 +13,12 @@
   The Pen & Marker poster also carries narration, so it renders as a
   narrated video: `python3 ../skills/sketch-deck/scripts/deck_video.py
   pen-and-marker-poster/presentation.html` (see "Video" in SKILL.md).
+* `journey-poster/`: a product impression. A Pen & Marker poster of one
+  user journey (Sam books a meeting room) with a card per screen: the
+  hand-drawn wireframe with the designer's notes, and a build step that
+  lays the pixel-perfect screen over it. The screens are real HTML in
+  `journey-poster/screens/`, photographed by `ui_kit.py`. Narrated, so it
+  also renders as a video.
 * `sketch-deck-example/`: a hand-drawn deck, presented as the sketch itself,
   with build steps.
 

@@ -1,6 +1,6 @@
 ---
 name: sketch-deck
-description: "Sketch Deck: the user sketches slides with a pen, typed notes and reference images on a zoomable canvas artifact; Claude reads the sketch and draws the finished slides into the same page. Use when the user asks for a new sketch deck or a presentation to sketch, says a sketch deck is done or updated, asks for a narrated video of a sketch deck, or asks to change how a Sketch Deck page works."
+description: "Sketch Deck: the user sketches slides with a pen, typed notes and reference images on a zoomable canvas artifact; Claude reads the sketch and draws the finished slides into the same page. Use when the user asks for a new sketch deck or a presentation to sketch, says a sketch deck is done or updated, asks for pixel-perfect screens of a product sketched in a deck, asks for a narrated video of a sketch deck, or asks to change how a Sketch Deck page works."
 ---
 
 # Sketch Deck
@@ -84,6 +84,8 @@ Paths are relative to the directory of this SKILL.md.
 
 - `template/sketch-deck.html`: the page, with an empty clean layer. Every
   deck starts as a copy of it.
+- `scripts/ui_kit.py`: photographs HTML screens and puts them on slides in
+  a device frame (see "UI impressions").
 - `scripts/deck_video.py`: renders a downloaded presentation as a narrated
   video (see "Video").
 - `scripts/sketch_render.py`: renders a database export to PNGs and a
@@ -243,7 +245,10 @@ when the user asks for a poster, an overview to zoom into, or "Prezi".
   poster already draws its content, so the Slides panel and the downloads
   name it ("Empty slide" otherwise).
 - Use no build steps in a poster deck: steps hide content on every slide at
-  or after the current one, so nested slides would show blanks.
+  or after the current one, so nested slides would show blanks. The one
+  exception is a step that covers something drawn under it, like a UI
+  impression laid over its sketched screen (see "UI impressions"): the
+  overview then shows the sketch, and the recap the finished screen.
 - Poster decks use the `subtle` motion (see "Motion") unless the user asks
   for another: `inject(..., motion="subtle")`. Nested slides that are
   drawn in their own groups (cards, panels) float above the poster on
@@ -286,6 +291,48 @@ other decks, and `depth` or `subtle` wherever the user asks for depth,
 parallax or 3D. A deck keeps its motion on every redraw: pass the same
 `motion` each time. All motions respect the viewer's reduced-motion setting
 (no flights at all).
+
+## UI impressions
+
+When the sketch is a product (screens, a user journey), Claude can add a
+layer of pixel-perfect screens: how the product would really look, in
+place of or next to the hand-drawn screens. The worked example is
+`examples/journey-poster/`: a Pen & Marker poster of one journey, a card
+per screen with the sketched wireframe and the designer's notes, and a
+build step that lays the real screen over the sketch.
+
+1. Write each screen as a standalone HTML page in `screens/<name>.html`,
+   at the device's size (`ui_kit.PHONE` 390 x 844, `TABLET`, `DESKTOP`
+   1440 x 900), with one shared stylesheet of design tokens
+   (`screens/ui.css`) so the screens read as one product. If the user names
+   a design system or brand, use its colours, type and components.
+   - Follow the sketch: its layout, its order, what each note asks for.
+   - Real, plausible content: names, times, amounts, statuses; every list
+     the screen shows is populated, every button and column has its label.
+     Never lorem ipsum, `test1` or an empty state unless the sketch asks
+     for one.
+   - Web fonts from Google Fonts are fine (they are fetched at render time
+     and end up in the picture); icons as inline SVG.
+2. In the deck script, `render_screens([Screen(name, path, size), ...])`
+   photographs them at 2x in headless Chromium and returns data: URIs (JPEG
+   by default; `fmt="png"` for exact flat colours). It stops when a screen
+   is wider than its device, has text cut off, a font or image that did not
+   load, or lorem ipsum; fix the HTML, don't pass `strict=False`.
+3. Place each with `device(uri, x, y, width, kind)`: `"phone"` (rounded
+   body, camera island), `"browser"` (window bar with `url`) or `"bare"`.
+   `device_height()` gives its height for layout. Two ways to show it:
+   - a build step over the sketched screen, with a card-coloured rect under
+     the device to hide the sketch's corners (the example's `card_slide`):
+     the sketch turns into the product as the presenter clicks;
+   - a nested frame next to or inside the sketch, to zoom into.
+4. The images live in the page as data: URIs (about 100 KB per phone
+   screen), so they work offline and in both downloads. Keep the screens'
+   HTML with the deck script: it is the spec for building the product, and
+   the next redraw renders it again.
+
+Narrate each screen's step with what it means for the user, not how it is
+built, so the deck becomes an impression film of the product (see
+"Video").
 
 ## Video
 

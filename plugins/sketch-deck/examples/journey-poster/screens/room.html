@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&display=swap">
+<link rel="stylesheet" href="ui.css">
+<style>
+  .hero { height: 220px; padding: 0 20px; background: linear-gradient(160deg, #9fb4ff, #3b5bdb); color: #fff; position: relative; }
+  .hero .status { padding: 0 8px 8px 14px; margin: 0 -20px; color: #fff; }
+  .hero .status .bat { border-color: #fff; } .hero .status .bat::after { background: #fff; }
+  .back { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.22); display: grid; place-items: center; margin-top: 8px; }
+  .hero h1 { font: 700 30px/1.1 var(--font); position: absolute; left: 20px; bottom: 18px; letter-spacing: -.02em; }
+  .hero p { position: absolute; left: 20px; bottom: 54px; font: 500 14px var(--font); opacity: .9; }
+  .facts { display: flex; gap: 8px; padding: 16px 20px 0; }
+  .section { padding: 22px 20px 0; }
+  .section h2 { font: 650 15px var(--font); margin-bottom: 10px; }
+  .slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .slot { height: 42px; border-radius: 10px; border: 1px solid var(--hairline); background: var(--surface); display: grid; place-items: center; font: 500 14px var(--font); }
+  .slot.taken { background: #eef0f3; color: var(--busy); text-decoration: line-through; border-color: #eef0f3; }
+  .slot.sel { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 650; }
+  .who { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--hairline); border-radius: 12px; padding: 10px 12px; }
+  .who .avatar { width: 30px; height: 30px; font-size: 12px; }
+  .who .a2 { background: #c5e8d5; color: #1b5e3b; } .who .a3 { background: #d8d2f7; color: #3f2f8f; }
+  .who span:last-child { color: var(--muted); font-size: 13px; margin-left: auto; }
+</style>
+<title>Harbour</title></head>
+<body>
+<div class="hero">
+  <div class="status"><span>9:41</span><span class="icons"><span class="bat"></span></span></div>
+  <div class="back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6"><path d="M15 5l-7 7 7 7"/></svg></div>
+  <p>Floor 3 · next to the kitchen</p><h1>Harbour</h1>
+</div>
+<div class="facts"><span class="chip">6 people</span><span class="chip">Screen</span><span class="chip">Whiteboard</span></div>
+<div class="section"><h2>Today</h2>
+  <div class="slots">
+    <span class="slot taken">11:00</span><span class="slot taken">11:30</span><span class="slot">12:00</span><span class="slot">12:30</span>
+    <span class="slot sel">13:00</span><span class="slot sel">13:30</span><span class="slot">14:00</span><span class="slot taken">14:30</span>
+  </div>
+</div>
+<div class="section"><h2>Invite</h2>
+  <div class="who"><span class="avatar a2">PN</span><span>Priya Nair</span><span>Design</span></div>
+  <div class="who" style="margin-top:8px"><span class="avatar a3">TV</span><span>Tom de Vries</span><span>Engineering</span></div>
+</div>
+<div class="foot"><div class="btn">Book 13:00 – 14:00</div></div>
+</body></html>

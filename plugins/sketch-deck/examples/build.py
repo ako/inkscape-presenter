@@ -45,6 +45,10 @@ def fetch_font(route):
 
 def build(example):
     example = os.path.abspath(example)
+    # fresh kits for every example: they keep state (seeded randomness, id counters), so an
+    # example must draw the same whichever examples were built before it
+    for m in [m for m, mod in sys.modules.items() if os.path.dirname(os.path.abspath(getattr(mod, '__file__', None) or '/')) == os.path.abspath(sys.path[0])]:
+        del sys.modules[m]
     spec = importlib.util.spec_from_file_location('deck', os.path.join(example, 'deck.py'))
     deck = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(deck)
