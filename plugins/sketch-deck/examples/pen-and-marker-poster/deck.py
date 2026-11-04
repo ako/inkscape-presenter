@@ -2,7 +2,10 @@
 
 An 8000 x 4500 poster sheet with a marker title and six cards joined by
 hand-drawn arrows; each card is its own slide, drawn in the 1679.2 x 944.5
-slide space, and a recap returns to the whole sheet. Built by ../build.py.
+slide space, and a recap returns to the whole sheet. It uses the full
+depth motion (posters default to the subtle one): the cards float above
+the poster and their drawings above the cards, so the camera seems to fly
+through layers. Built by ../build.py.
 """
 from pen_marker import *
 
@@ -19,7 +22,7 @@ def at(i):
 def card_slide(n, label, title, body, visual):
     s = card(LOCAL_W, 944.5)
     tc, _ = textcol(n, label, title, body)
-    return s + visual + tc
+    return s + depth(0.6, visual) + tc        # the drawing floats a little above its card
 
 
 def sketch():
@@ -109,15 +112,15 @@ CARDS = [("pm-1", "Sketch", sketch), ("pm-2", "Say done", done), ("pm-3", "See",
 
 def poster():
     s = f'<rect x="0" y="0" width="{POSTER[2]}" height="{POSTER[3]}" fill="{PAPER}"/>'
-    s += swipe(400, 560, 1900, 120)
-    s += MT(400, 560, 300, "Sketch Deck")
+    t = swipe(400, 560, 1900, 120) + MT(400, 560, 300, "Sketch Deck")
     p, _ = para(410, 780, 76, "You sketch slides by hand; Claude draws them in a style; "
                                "you present them, or download them for anyone.", 62)
-    s += p
-    s += person(5600, 640, 110) + bot(6800, 620, 230)
-    s += arrow(5770, 620, 6620, 620, sw=6, bend=-120)
-    s += T(6200, 470, 80, "“done!”", INK, "middle", True)
-    s += tape(6200, 1000, 520, 90, -3) + T(6200, 1022, 52, "sketch → slides", INK, "middle", True)
+    s += depth(1, t) + p                  # the title sits nearest, so it slides away first
+    h = person(5600, 640, 110) + bot(6800, 620, 230)
+    h += arrow(5770, 620, 6620, 620, sw=6, bend=-120)
+    h += T(6200, 470, 80, "“done!”", INK, "middle", True)
+    h += tape(6200, 1000, 520, 90, -3) + T(6200, 1022, 52, "sketch → slides", INK, "middle", True)
+    s += depth(0.5, h)
     for i in range(6):                     # hand-drawn arrows between the cards, in reading order
         x, y = at(i)
         if i % 3 < 2:
@@ -137,5 +140,5 @@ def build(html_path):
         frames.append((fid, x, y, CW, CH, 20 + i * 10))
     groups.append(group("pm-recap", "Recap", "", POSTER, POSTER[2]))
     frames.append(("pm-recap",) + POSTER + (90,))
-    inject(html_path, groups)
+    inject(html_path, groups, motion="depth")   # the full effect, as a showpiece; posters default to "subtle"
     return frames

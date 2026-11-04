@@ -9,6 +9,7 @@ template, then build groups with panel()/group() and inject() them.
 """
 import html
 import slide_kit
+from slide_kit import depth
 E = html.escape
 LW, LH = 1679.2, 944.5
 
@@ -142,6 +143,6 @@ def theme_page(html_path, title):
     slide_kit.theme_page(html_path, title, swaps=PAGE_SWAPS)
 
 
-def inject(html_path, groups):
+def inject(html_path, groups, motion="glide"):
     """Replace the page's clean layer with the blueprint arrow markers + the given slide groups."""
-    slide_kit.inject(html_path, groups, DEFS)
+    slide_kit.inject(html_path, groups, DEFS, motion)

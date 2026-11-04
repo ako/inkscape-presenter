@@ -27,7 +27,7 @@ notes). Ids start with wb-. See styles/watercolor-blueprint.md.
 """
 import html, math
 import slide_kit
-from slide_kit import LOCAL_W
+from slide_kit import LOCAL_W, depth
 
 E = html.escape
 INK = "#2b2f33"; SPEC = "#55606a"; OCH = "#d6a33a"; OCH_D = "#94690f"; WASH = "#8fa3b6"; WASH2 = "#b9c7d3"
@@ -225,6 +225,6 @@ def theme_page(html_path, title):
     """Set the deck's title and add the style's fonts to the page."""
     slide_kit.theme_page(html_path, title, fonts=FONTS)
 
-def inject(html_path, groups):
+def inject(html_path, groups, motion="glide"):
     """Replace the page's clean layer; the defs travel inside poster_group."""
-    slide_kit.inject(html_path, groups, "")
+    slide_kit.inject(html_path, groups, "", motion)

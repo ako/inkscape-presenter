@@ -14,7 +14,7 @@ Usage (from a deck script, next to slide_kit.py):
 """
 import html, math, random
 import slide_kit
-from slide_kit import LOCAL_W
+from slide_kit import LOCAL_W, depth
 
 R = random.Random(11)
 E = html.escape
@@ -269,6 +269,6 @@ def group(fid, title, inner, frame, aw=LOCAL_W):
         inner = f'<g transform="scale({LOCAL_W / aw:.6f})">{inner}</g>'
     return f'<g data-frame="{fid}" data-title="{E(title)}" transform="translate({x} {y}) scale({w / LOCAL_W:.5f})">{inner}</g>'
 
-def inject(html_path, groups):
+def inject(html_path, groups, motion="glide"):
     """Replace the page's clean layer with the given slide groups."""
-    slide_kit.inject(html_path, groups, "")
+    slide_kit.inject(html_path, groups, "", motion)

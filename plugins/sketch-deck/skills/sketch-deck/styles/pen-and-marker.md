@@ -59,3 +59,10 @@ See "Poster decks" in SKILL.md. Pen & Marker posters:
 - A big card may hold zoom frames for its details ("01a ...", "01b ...");
   give each an empty titled group.
 - End with a recap frame equal to the poster.
+- Use the subtle motion (`inject(..., motion="subtle")`; "depth" when
+  the user asks for the full effect, as in the example). The cards float
+  above the poster on their own, as nested slides. On each card, wrap the
+  drawing in `depth(0.6, ...)` and keep the card, tape and text column at
+  0; on the poster, the title and its swipe go at 1 and the side
+  illustration (people, arrows, tape labels) at 0.5. Leave the paper and
+  the arrows between the cards at 0.

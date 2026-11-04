@@ -61,6 +61,25 @@ poster.
   between layers so blocks at the back stay visible, and put the tallest
   block of a layer at the front so it hides no labels.
 
+## Depth
+
+Watercolor posters use the subtle motion (`inject(..., motion="subtle")`;
+"depth" when the user asks for the full effect).
+The poster is one illustration and its tour frames are empty, so the depth
+comes from `depth()` layers inside `poster()`. The example uses:
+
+- washes, drips and spatter at -1, behind the paper's plane;
+- paper, guides and flow arrows at 0;
+- the stack plates rising 0.25 per layer from the bottom plate (0) to the
+  top, each plate with everything on it, and the dash-dot guides between
+  two plates halfway between their depths;
+- side groups (the actor and their tools, outputs, books) at 0.4;
+- the title block at 0.8, and every callout label at 1.2, nearest.
+
+Keep the drawing order as on a flat plate: draw all guides before the
+plates, and the labels last. Layers change nothing at rest, so the one
+look in step 5 still covers the poster.
+
 ## Tour
 
 Give every tour frame a title through `tour_groups`, so the Slides panel,
