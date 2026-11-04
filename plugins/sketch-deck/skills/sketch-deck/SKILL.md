@@ -242,6 +242,13 @@ when the user asks for a poster, an overview to zoom into, or "Prezi".
   name it ("Empty slide" otherwise).
 - Use no build steps in a poster deck: steps hide content on every slide at
   or after the current one, so nested slides would show blanks.
+- Poster decks use the `depth` motion (see "Motion") unless the user asks
+  for the flat glide: `inject(..., motion="depth")`. Nested slides that are
+  drawn in their own groups (cards, panels) float above the poster on
+  their own. A poster drawn as one illustration, with empty groups for its
+  zoom frames, gets its depth only from `depth()` layers inside the
+  illustration, so give it those; each style file says which of its parts
+  go back and which come forward.
 
 ## Motion
 
@@ -267,8 +274,8 @@ carry it along.
     title or a callout nearest. Keep body text at 0 and use two or three
     levels per slide, not one per item. `depth()` can hold steps or sit
     inside one, and it does nothing under `glide`.
-- Use `depth` when the user asks for depth, parallax, 3D or a more
-  cinematic camera, and suggest it for posters. A deck keeps its motion on
+- Use `depth` for poster decks (see "Poster decks"), and for other decks
+  when the user asks for depth, parallax, 3D or a more cinematic camera. A deck keeps its motion on
   every redraw: pass the same `motion` each time. Both motions respect the
   viewer's reduced-motion setting (no flights at all).
 

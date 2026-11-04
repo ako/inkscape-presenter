@@ -2,7 +2,9 @@
 
 One 7200 x 4050 overview sheet with six panels joined by amber chevrons;
 each panel is its own slide, two of them with a zoom frame on a detail, and
-a recap frame returns to the whole poster. Built by ../build.py.
+a recap frame returns to the whole poster. It uses the depth motion: the
+panels float above the overview and their diagrams above the panels' grid.
+Built by ../build.py.
 """
 from blueprint_kit import *
 
@@ -36,7 +38,7 @@ def sketch():
     s += T(1100, 640, 24, "“bar chart here”", RED, 400, mono=True)
     s += T(590, 640, 22, "frame 1", AMB, 500, mono=True) + T(1090, 600, 22, "frame 2", AMB, 500, mono=True)
     s += lines(590, 720, 24, ["Draw each slide, frame it, and leave", "notes: the sketch is the brief."], DIM)
-    return panel("01", "Sketch", "Draw it by hand", s)
+    return panel("01", "Sketch", "Draw it by hand", depth(0.6, s))
 
 
 def done():
@@ -52,7 +54,7 @@ def done():
     s += arrow(1150, 555, 1250, 555)
     s += node(1260, 470, 350, 170, "Claude", "ArtifactData list", ts=34)
     s += lines(1260, 720, 22, ["Every collection is", "exported as JSON."], DIM)
-    return panel("02", "Say done", "Claude reads the database", s)
+    return panel("02", "Say done", "Claude reads the database", depth(0.6, s))
 
 
 ZOOM3 = (900, 560, 700, 300)             # panel-local zoom regions (x, y, w, h)
@@ -72,7 +74,7 @@ def see():
     s += arrow(840, 560, 930, 660)
     s += corners(*ZOOM3)
     s += lines(70, 700, 24, ["Claude looks at every frame", "image, then reads the notes", "as the brief for that slide."], DIM)
-    return panel("03", "See", "Render the sketch", s)
+    return panel("03", "See", "Render the sketch", depth(0.6, s))
 
 
 def draw():
@@ -86,7 +88,7 @@ def draw():
         s += arrow(1050, 300 + i * 150, 1170, 505, AMB if on else LINE, 3 if on else 2.5, "" if on else "8 8")
     s += node(1180, 430, 430, 150, "clean layer", '<g data-frame="…">', ts=30)
     s += code(1180, 640, 430, ['step("key", "Name", svg)'], 22, "BUILD STEP")
-    return panel("04", "Draw", "Draw in a style", s)
+    return panel("04", "Draw", "Draw in a style", depth(0.6, s))
 
 
 def present():
@@ -105,7 +107,7 @@ def present():
     pan = [("Slides panel", "insert · reorder"), ("Steps panel", "reveal order"), ("Sketch · Both · Clean", "view")]
     for i, (t, sub) in enumerate(pan):
         s += node(90 + i * 510, 730, 480, 120, t, sub, ts=26, ss=20)
-    return panel("05", "Present", "Fly through the frames", s)
+    return panel("05", "Present", "Fly through the frames", depth(0.6, s))
 
 
 def share():
@@ -119,7 +121,7 @@ def share():
               24, "LAYERS", hl=(2, 3))
     s += lines(980, 820, 22, ["presents with svg-presenter.js"], DIM)
     s += corners(*ZOOM6)
-    return panel("06", "Share", "Download the deck", s)
+    return panel("06", "Share", "Download the deck", depth(0.6, s))
 
 
 PANELS = [("bp-1", "Sketch", sketch), ("bp-2", "Say done", done), ("bp-3", "See", see),
@@ -129,8 +131,7 @@ ZOOMS = {2: ("bp-3z", "manifest.json", ZOOM3), 5: ("bp-6z", "Layers for Inkscape
 
 def overview():
     s = grid_bg()
-    s += T(28, 60, 14, "00 · OVERVIEW", AMB, 500, mono=True, ls=2)
-    s += H(28, 128, 64, "Sketch Deck")
+    s += depth(0.8, T(28, 60, 14, "00 · OVERVIEW", AMB, 500, mono=True, ls=2) + H(28, 128, 64, "Sketch Deck"))
     s += lines(30, 176, 17, ["You sketch slides by hand; Claude draws them in a style;",
                              "you present them, or download them for anyone."], DIM)
     s += f'<path d="M28 205H{LW - 28}" stroke="{FAINT}" stroke-width="2"/>'
@@ -168,5 +169,5 @@ def build(html_path):
             frames.append((zid,) + zf + (t,)); t += 10
     groups.append(f'<g data-frame="bp-recap" data-title="Recap" transform="scale({POSTER[2] / LW:.5f})"></g>')
     frames.append(("bp-recap",) + POSTER + (t,))
-    inject(html_path, groups)
+    inject(html_path, groups, motion="depth")
     return frames

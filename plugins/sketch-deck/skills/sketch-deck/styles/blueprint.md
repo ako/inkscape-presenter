@@ -60,3 +60,8 @@ See "Poster decks" in SKILL.md. Blueprint posters:
   empty titled group.
 - Present order: poster, panel, its zoom, next panel, ..., then a recap
   frame equal to the poster.
+- Use the depth motion (`inject(..., motion="depth")`). The panels float
+  above the overview on their own, as nested slides. Pass each panel's
+  diagram to `panel()` as `depth(0.6, body)`, so it lifts off the panel's
+  grid while the heading stays on it, and put the overview's eyebrow and
+  heading at 0.8. Leave the grid, legend and chevrons at 0.
