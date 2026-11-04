@@ -1,10 +1,10 @@
 """Blueprint example: a poster that explains the Sketch Deck skill.
 
 One 7200 x 4050 overview sheet with six panels joined by amber chevrons;
-each panel is its own slide, two of them with a zoom frame on a detail, and
-a recap frame returns to the whole poster. It uses the depth motion: the
-panels float above the overview and their diagrams above the panels' grid.
-Built by ../build.py.
+each panel is its own slide, two of them with a zoom frame on a detail,
+and a recap frame returns to the whole poster. It uses the subtle depth
+motion: the panels float above the overview and their diagrams above the
+panels' grid. Built by ../build.py.
 """
 from blueprint_kit import *
 
@@ -169,5 +169,5 @@ def build(html_path):
             frames.append((zid,) + zf + (t,)); t += 10
     groups.append(f'<g data-frame="bp-recap" data-title="Recap" transform="scale({POSTER[2] / LW:.5f})"></g>')
     frames.append(("bp-recap",) + POSTER + (t,))
-    inject(html_path, groups, motion="depth")
+    inject(html_path, groups, motion="subtle")
     return frames

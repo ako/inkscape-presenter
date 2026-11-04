@@ -1,12 +1,13 @@
 """Watercolor Blueprint example: a poster that explains the Sketch Deck skill.
 
-One dense poster drawn as an exploded technical plate: the skill is a stack
-of isometric layers, from the sketch at the bottom to the finished slides on
-top, with you on the left and what you get on the right. Tour frames nested
-in the poster fly the camera through it in callout order. It uses the depth
-motion: the washes sit behind the paper's plane, the plates rise one level
-each from the sketch to the clean layer, and the callouts float nearest, so
-the tour flies through the exploded view. Built by ../build.py.
+One dense poster drawn as an exploded technical plate: the skill is a
+stack of isometric layers, from the sketch at the bottom to the finished
+slides on top, with you on the left and what you get on the right. Tour
+frames nested in the poster fly the camera through it in callout order. It
+uses the subtle depth motion: the washes sit behind the paper's plane, the
+plates rise one level each from the sketch to the clean layer, and the
+callouts float nearest, so the tour flies through the exploded view. Built
+by ../build.py.
 """
 from watercolor_blueprint import *
 
@@ -137,5 +138,5 @@ TOUR = [("wb-1", "1 · You sketch", 100, 770, 960),
 def build(html_path):
     theme_page(html_path, TITLE)
     tours = tour_frames(FRAME, CW, CH, TOUR)
-    inject(html_path, [poster_group(FRAME, CW, CH, poster(), "Sketch Deck")] + tour_groups(tours), motion="depth")
+    inject(html_path, [poster_group(FRAME, CW, CH, poster(), "Sketch Deck")] + tour_groups(tours), motion="subtle")
     return [FRAME + (1,)] + [(f[0], f[2], f[3], f[4], f[5], f[6]) for f in tours]

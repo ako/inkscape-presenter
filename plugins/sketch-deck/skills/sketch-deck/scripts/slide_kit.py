@@ -73,13 +73,13 @@ def step(key, name, svg):
     return f'<g data-step="{E(key)}" data-name="{E(name)}">{svg}</g>'
 
 def depth(z, svg):
-    """A layer for the depth motion (inject(..., motion="depth")): z from -2.5 (far
+    """A layer for the subtle and depth motions (inject(..., motion=...)): z from -2.5 (far
     behind the slide) to 2.5 (near the viewer); 0 is the slide itself. Layers move at
     their own pace while the camera flies and line up when it arrives. Ignored by the
     default motion. May hold steps, or sit inside one."""
     return f'<g data-depth="{z:g}">{svg}</g>'
 
-MOTIONS = ("glide", "depth")
+MOTIONS = ("glide", "subtle", "depth")
 
 def card():
     return rect(0, 0, LOCAL_W, LOCAL_H, W, HAIR, 2, 22) + f'<rect x="0" y="0" width="12" height="{LOCAL_H}" rx="6" fill="{COB}"/>'
@@ -116,8 +116,9 @@ def number_text(svg):
 def inject(html_path, groups, defs=DEFS, motion="glide"):
     """Replace the page's clean layer with defs + the given slide groups (one string per
     slide); every kit writes its slides through here, so their text gets data-tid keys.
-    motion: "glide" (the default camera) or "depth" (layers and a slight tilt while the
-    camera flies; see depth())."""
+    motion: "glide" (the default, a flat canvas), "subtle" (layers move a little
+    while the camera flies; see depth()) or "depth" (layers move twice as far, the
+    view tilts and build steps rise into place)."""
     if motion not in MOTIONS:
         raise ValueError(f"motion must be one of {MOTIONS}, not {motion!r}")
     s = open(html_path).read()

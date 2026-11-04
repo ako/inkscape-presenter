@@ -2,9 +2,10 @@
 
 An 8000 x 4500 poster sheet with a marker title and six cards joined by
 hand-drawn arrows; each card is its own slide, drawn in the 1679.2 x 944.5
-slide space, and a recap returns to the whole sheet. It uses the depth
-motion: the cards float above the poster and their drawings above the cards,
-so the camera seems to fly through layers. Built by ../build.py.
+slide space, and a recap returns to the whole sheet. It uses the full
+depth motion (posters default to the subtle one): the cards float above
+the poster and their drawings above the cards, so the camera seems to fly
+through layers. Built by ../build.py.
 """
 from pen_marker import *
 
@@ -139,5 +140,5 @@ def build(html_path):
         frames.append((fid, x, y, CW, CH, 20 + i * 10))
     groups.append(group("pm-recap", "Recap", "", POSTER, POSTER[2]))
     frames.append(("pm-recap",) + POSTER + (90,))
-    inject(html_path, groups, motion="depth")   # the cards, nested in the poster, float above it
+    inject(html_path, groups, motion="depth")   # the full effect, as a showpiece; posters default to "subtle"
     return frames

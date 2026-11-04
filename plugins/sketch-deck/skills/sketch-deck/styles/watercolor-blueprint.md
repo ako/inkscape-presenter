@@ -63,7 +63,8 @@ poster.
 
 ## Depth
 
-Watercolor posters use the depth motion (`inject(..., motion="depth")`).
+Watercolor posters use the subtle motion (`inject(..., motion="subtle")`;
+"depth" when the user asks for the full effect).
 The poster is one illustration and its tour frames are empty, so the depth
 comes from `depth()` layers inside `poster()`. The example uses:
 

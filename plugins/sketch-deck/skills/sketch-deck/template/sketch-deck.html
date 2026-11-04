@@ -299,8 +299,8 @@ function flyTo(t, instant){
   cancelAnimationFrame(raf); flight = null;
   if (instant || reduce){ cam = { ...t }; render(); return; }
   const iz = interpolateZoom([cam.x, cam.y, cam.w], [t.x, t.y, t.w]);
-  const deep = present && MOTION === 'depth';
-  const dur = Math.min(deep ? 2400 : 2000, Math.max(deep ? 700 : 550, iz.duration * (deep ? 1.05 : 0.85))), t0 = performance.now();
+  const deep = present && MOTION !== 'glide', full = deep && MOTION === 'depth';
+  const dur = Math.min(full ? 2400 : 2000, Math.max(full ? 700 : 550, iz.duration * (full ? 1.05 : 0.85))), t0 = performance.now();
   if (deep) depthGather();
   const step = now => {
     const k = Math.min(1, (now - t0) / dur), e = ease(k), [x, y, w] = iz(e);
@@ -312,14 +312,16 @@ function flyTo(t, instant){
 }
 
 /* ---------------- depth motion ----------------
-   <g id="clean" data-motion="depth"> gives Present a camera with depth: while it
-   flies, slides nested in another slide's frame and parts marked data-depth
-   (-2.5 far ... 2.5 near, 0 = the slide) move as layers at their own pace, and
-   the view tilts a little with the motion. Every layer lines up again when the
-   camera arrives, so a slide at rest looks exactly as drawn. */
-const MOTION = cleanG.dataset.motion === 'depth' ? 'depth' : 'glide';
+   <g id="clean" data-motion="subtle|depth"> gives Present a camera with depth:
+   while it flies, slides nested in another slide's frame and parts marked
+   data-depth (-2.5 far ... 2.5 near, 0 = the slide) move as layers at their own
+   pace. Every layer lines up again when the camera arrives, so a slide at rest
+   looks exactly as drawn. "subtle" keeps the glide's timing with half the
+   layer movement; "depth" doubles it, flies a little slower, tilts the view with
+   the motion and lets build steps rise into place. */
+const MOTION = ['subtle', 'depth'].includes(cleanG.dataset.motion) ? cleanG.dataset.motion : 'glide';
 document.body.dataset.motion = MOTION;
-const DEPTH_LEAD = 0.12, DEPTH_NEST = 0.8, DEPTH_MAX = 2.5, TILT_MAX = 3.5;
+const DEPTH_LEAD = MOTION === 'depth' ? 0.12 : 0.06, DEPTH_NEST = 0.8, DEPTH_MAX = 2.5, TILT_MAX = MOTION === 'depth' ? 3.5 : 0;
 let flight = null, depthEls = null, tilt = { x: 0, y: 0, cx: 0, cy: 0, t: 0 };
 function stopFlight(){ cancelAnimationFrame(raf); flight = null; depthFrame(); }
 function depthOf(el){ const v = parseFloat(el.getAttribute('data-depth')); return isFinite(v) ? Math.max(-DEPTH_MAX, Math.min(DEPTH_MAX, v)) : 0; }
@@ -374,7 +376,7 @@ function depthFrame(){
     d.el.setAttribute('transform', `matrix(${[X.a, X.b, X.c, X.d, X.e, X.f].map(v => +v.toFixed(5)).join(' ')}) ${d.orig}`);
   });
   // tilt with the camera's speed across the screen (screen widths per second), eased out near the end
-  if (tilt.t){
+  if (tilt.t && TILT_MAX){
     const dt = Math.max(1, now - tilt.t), vx = (cam.x - tilt.cx) / cam.w * 1000 / dt, vy = (cam.y - tilt.cy) / cam.w * 1000 / dt;
     const k = Math.min(1, dt / 120), fade = Math.sin(Math.PI * e);
     tilt.x += (Math.max(-TILT_MAX, Math.min(TILT_MAX, vx * 2.2)) * fade - tilt.x) * k;
@@ -1804,7 +1806,7 @@ function buildExportSvg(){
     L.setAttribute('data-sd-slide', i + 1);
     L.setAttribute('data-sd-frame', [f.x, f.y, f.w, f.h].map(r1).join(' '));
     exTitle(L, slideTitle(f.id));
-    const cgd = cleanGroupOf(f.id), sd = MOTION === 'depth' && showClean && cgd ? slideDepth(cgd) : 0;
+    const cgd = cleanGroupOf(f.id), sd = MOTION !== 'glide' && showClean && cgd ? slideDepth(cgd) : 0;
     if (sd) L.setAttribute('data-depth', +sd.toFixed(3));
     const steps = activeSteps(f.id), stepOf = new Map();
     steps.forEach((st, j) => st.els.forEach(el => el && stepOf.set(el, j)));
@@ -1920,9 +1922,11 @@ function sketchDeckPlayer(){
   }
   function ease(t){ return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
 
-  /* ---- depth motion (data-sd-motion="depth"): layers move at their own pace while
-     the camera flies and line up again when it arrives; the view tilts with the motion ---- */
-  var deep = svg.getAttribute('data-sd-motion') === 'depth', LEAD = 0.12, TILT_MAX = 3.5;
+  /* ---- depth motion (data-sd-motion="subtle" or "depth"): layers move at their own pace
+     while the camera flies and line up again when it arrives; "depth" moves them twice
+     as far, flies a little slower and tilts the view with the motion ---- */
+  var motion = svg.getAttribute('data-sd-motion'), deep = motion === 'subtle' || motion === 'depth', full = motion === 'depth';
+  var LEAD = full ? 0.12 : 0.06, TILT_MAX = full ? 3.5 : 0;
   var depthEls = [], depthOn = false, tilt = { x: 0, y: 0, cx: 0, cy: 0, t: 0 };
   function staticMatrix(n){
     var m = new DOMMatrix();
@@ -1953,7 +1957,7 @@ function sketchDeckPlayer(){
       var X = d.Pi.multiply(depthMap(z, e, d.zp).inverse()).multiply(depthMap(z, e, d.zp + d.z)).multiply(d.P);
       d.el.setAttribute('transform', 'matrix(' + [X.a, X.b, X.c, X.d, X.e, X.f].map(function(v){ return +v.toFixed(5); }).join(' ') + ') ' + d.orig);
     });
-    if (tilt.t){
+    if (tilt.t && TILT_MAX){
       var dt = Math.max(1, now - tilt.t), vx = (cam.x + cam.w / 2 - tilt.cx) / cam.w * 1000 / dt, vy = (cam.y + cam.h / 2 - tilt.cy) / cam.w * 1000 / dt;
       var k = Math.min(1, dt / 120), fade = Math.sin(Math.PI * e), lim = function(v){ return Math.max(-TILT_MAX, Math.min(TILT_MAX, v * 2.2)) * fade; };
       tilt.x += (lim(vx) - tilt.x) * k; tilt.y += (lim(vy) - tilt.y) * k;
@@ -1970,14 +1974,14 @@ function sketchDeckPlayer(){
     svg.style.transform = ''; tilt = { x: 0, y: 0, cx: 0, cy: 0, t: 0 };
   }
   // build steps rise a little into place, in the slide's own units
-  if (deep) slides.forEach(function(s){ s.steps.forEach(function(g){ g.style.setProperty('--sd-rise', (s.w / 1679.2 * 26).toFixed(2) + 'px'); }); });
+  if (full) slides.forEach(function(s){ s.steps.forEach(function(g){ g.style.setProperty('--sd-rise', (s.w / 1679.2 * 26).toFixed(2) + 'px'); }); });
 
   function fly(t, instant){
     cancelAnimationFrame(raf);
     var f = cam;
     if (!f || instant || reduce){ setCam(t); return; }
     var z = zoom([f.x + f.w / 2, f.y + f.h / 2, f.w], [t.x + t.w / 2, t.y + t.h / 2, t.w]);
-    var dur = deep ? Math.min(2400, Math.max(700, z.duration * 1.05)) : Math.min(2000, Math.max(550, z.duration * 0.85));
+    var dur = full ? Math.min(2400, Math.max(700, z.duration * 1.05)) : Math.min(2000, Math.max(550, z.duration * 0.85));
     var a0 = f.h / f.w, a1 = t.h / t.w, t0 = performance.now();
     function frame(now){
       var k = Math.min(1, (now - t0) / dur);

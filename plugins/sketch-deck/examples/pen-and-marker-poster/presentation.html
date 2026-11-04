@@ -140,9 +140,11 @@
   }
   function ease(t){ return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
 
-  /* ---- depth motion (data-sd-motion="depth"): layers move at their own pace while
-     the camera flies and line up again when it arrives; the view tilts with the motion ---- */
-  var deep = svg.getAttribute('data-sd-motion') === 'depth', LEAD = 0.12, TILT_MAX = 3.5;
+  /* ---- depth motion (data-sd-motion="subtle" or "depth"): layers move at their own pace
+     while the camera flies and line up again when it arrives; "depth" moves them twice
+     as far, flies a little slower and tilts the view with the motion ---- */
+  var motion = svg.getAttribute('data-sd-motion'), deep = motion === 'subtle' || motion === 'depth', full = motion === 'depth';
+  var LEAD = full ? 0.12 : 0.06, TILT_MAX = full ? 3.5 : 0;
   var depthEls = [], depthOn = false, tilt = { x: 0, y: 0, cx: 0, cy: 0, t: 0 };
   function staticMatrix(n){
     var m = new DOMMatrix();
@@ -173,7 +175,7 @@
       var X = d.Pi.multiply(depthMap(z, e, d.zp).inverse()).multiply(depthMap(z, e, d.zp + d.z)).multiply(d.P);
       d.el.setAttribute('transform', 'matrix(' + [X.a, X.b, X.c, X.d, X.e, X.f].map(function(v){ return +v.toFixed(5); }).join(' ') + ') ' + d.orig);
     });
-    if (tilt.t){
+    if (tilt.t && TILT_MAX){
       var dt = Math.max(1, now - tilt.t), vx = (cam.x + cam.w / 2 - tilt.cx) / cam.w * 1000 / dt, vy = (cam.y + cam.h / 2 - tilt.cy) / cam.w * 1000 / dt;
       var k = Math.min(1, dt / 120), fade = Math.sin(Math.PI * e), lim = function(v){ return Math.max(-TILT_MAX, Math.min(TILT_MAX, v * 2.2)) * fade; };
       tilt.x += (lim(vx) - tilt.x) * k; tilt.y += (lim(vy) - tilt.y) * k;
@@ -190,14 +192,14 @@
     svg.style.transform = ''; tilt = { x: 0, y: 0, cx: 0, cy: 0, t: 0 };
   }
   // build steps rise a little into place, in the slide's own units
-  if (deep) slides.forEach(function(s){ s.steps.forEach(function(g){ g.style.setProperty('--sd-rise', (s.w / 1679.2 * 26).toFixed(2) + 'px'); }); });
+  if (full) slides.forEach(function(s){ s.steps.forEach(function(g){ g.style.setProperty('--sd-rise', (s.w / 1679.2 * 26).toFixed(2) + 'px'); }); });
 
   function fly(t, instant){
     cancelAnimationFrame(raf);
     var f = cam;
     if (!f || instant || reduce){ setCam(t); return; }
     var z = zoom([f.x + f.w / 2, f.y + f.h / 2, f.w], [t.x + t.w / 2, t.y + t.h / 2, t.w]);
-    var dur = deep ? Math.min(2400, Math.max(700, z.duration * 1.05)) : Math.min(2000, Math.max(550, z.duration * 0.85));
+    var dur = full ? Math.min(2400, Math.max(700, z.duration * 1.05)) : Math.min(2000, Math.max(550, z.duration * 0.85));
     var a0 = f.h / f.w, a1 = t.h / t.w, t0 = performance.now();
     function frame(now){
       var k = Math.min(1, (now - t0) / dur);
